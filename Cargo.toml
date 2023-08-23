@@ -1,0 +1,23 @@
+[package]
+name = "subxt_example_codegen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+codec = "0.0.0"
+subxt = { path = "../subxt/subxt" }
+subxt-metadata = { path = "../subxt/metadata" }
+subxt-codegen = { path = "../subxt/codegen" }
+subxt-signer = { path = "../subxt/signer", features = ["subxt"] }
+syn = "2.0.29"
+quote = "1.0.33"
+anyhow = "1.0.75"
+proc-macro2 = "1.0.66"
+heck = "0.4.1"
+prettyplease = "0.2.12"
+scale-info = "2.9.0"
+bitvec = "1.0.1"
+trybuild = "1.0.83"
+tokio = "1.32.0"
