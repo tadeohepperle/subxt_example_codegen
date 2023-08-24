@@ -1,16 +1,23 @@
+use std::collections::BTreeSet;
+
 use anyhow::{anyhow, Ok};
 use heck::ToSnakeCase;
-use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote};
-use scale_info::{form::PortableForm, Field, Type, TypeDef, TypeDefPrimitive};
+use proc_macro2::{Ident, Punct, TokenStream, TokenTree};
+use quote::{format_ident, quote, ToTokens};
+use scale_info::{
+    form::PortableForm, Field, PortableRegistry, Type, TypeDef, TypeDefArray, TypeDefCompact,
+    TypeDefPrimitive, TypeDefSequence, TypeParameter,
+};
 use subxt::ext::codec::Decode;
-use subxt_codegen::TypeGenerator;
+use subxt_codegen::{CratePath, DerivesRegistry, TypeGenerator, TypeSubstitutes};
 use subxt_metadata::Metadata;
 
 pub enum FileOrUrl {
     File(String),
     Url(String),
 }
+
+pub mod polkadot;
 
 pub struct ExampleGenerator {
     metadata: subxt_metadata::Metadata,
@@ -30,12 +37,12 @@ impl ExampleGenerator {
 
     pub fn file_with_all_examples(&self) -> anyhow::Result<TokenStream> {
         let mut call_examples: Vec<TokenStream> = vec![];
-        'o: for p in self.metadata.pallets() {
+        for p in self.metadata.pallets() {
             if let Some(variants) = p.call_variants() {
                 for c in variants {
                     let call_example = self.call_example(p.name(), &c.name)?;
                     call_examples.push(call_example);
-                    break 'o;
+                    // break 'o;
                 }
             }
         }
@@ -98,7 +105,7 @@ impl ExampleGenerator {
 
         let code = quote!(
             #(#field_declarations);*
-            let payload = interface::tx().#pallet_name().#call_name( #(#field_names),*);
+            let payload = polkadot::tx().#pallet_name().#call_name( #(#field_names),*);
         );
         Ok(code)
     }
@@ -124,9 +131,9 @@ impl ExampleGenerator {
     pub fn new_type_gen(&self) -> TypeGenerator {
         TypeGenerator::new(
             self.metadata.types(),
-            "interface",
-            Default::default(),
-            Default::default(),
+            "runtime_types",
+            TypeSubstitutes::with_default_substitutes(&Default::default()),
+            DerivesRegistry::with_default_derives(&Default::default()),
             Default::default(),
             true,
         )
@@ -135,7 +142,8 @@ impl ExampleGenerator {
     fn imports_and_static_interface(&self) -> TokenStream {
         quote!(
             #[subxt::subxt(runtime_metadata_path = "polkadot.scale")]
-            pub mod interface {}
+            pub mod polkadot {}
+            use polkadot::runtime_types;
 
             use subxt::{OnlineClient, PolkadotConfig};
             use subxt_signer::sr25519::dev;
@@ -153,22 +161,22 @@ fn type_def_example(
     id: u32,
     ty: &Type<PortableForm>,
 ) -> anyhow::Result<TokenStream> {
+    let unused_type_params = ty_has_unused_type_parameters(type_gen, ty);
     match &ty.type_def {
         scale_info::TypeDef::Composite(def) => {
-            let fields = fields_example(type_gen, &def.fields)?;
-            let struct_path = type_gen.resolve_type_path(id);
+            let struct_path = resolve_type_path_omit_generics(type_gen, id);
+            let fields: TokenStream = fields_example(type_gen, &def.fields, unused_type_params)?;
             Ok(quote!(#struct_path #fields))
         }
         scale_info::TypeDef::Variant(def) => {
             // just take first variant:
-            let enum_path = type_gen.resolve_type_path(id);
+            let enum_path = resolve_type_path_omit_generics(type_gen, id);
             let first_variant = def
                 .variants
                 .first()
                 .ok_or(anyhow!("variant type should have at least one variant"))?;
-
-            let fields = fields_example(type_gen, &first_variant.fields)?;
             let variant_ident = format_ident!("{}", &first_variant.name);
+            let fields = fields_example(type_gen, &first_variant.fields, unused_type_params)?;
             Ok(quote!(#enum_path:: #variant_ident #fields))
         }
         scale_info::TypeDef::Sequence(def) => {
@@ -182,7 +190,7 @@ fn type_def_example(
             let inner_ty = type_gen.resolve_type(def.type_param.id);
             let item_code = type_def_example(type_gen, def.type_param.id, &inner_ty)?;
             let inner_is_copy = type_def_is_copy(type_gen, &inner_ty.type_def);
-            let len = def.len;
+            let len = def.len as usize;
             let arr_code = if inner_is_copy {
                 // if the item_code is an expression that is `Copy` we can use short init syntax:
                 quote!([#item_code;#len])
@@ -204,16 +212,24 @@ fn type_def_example(
         scale_info::TypeDef::Primitive(def) => Ok(primitive_example(def)),
         scale_info::TypeDef::Compact(def) => {
             let inner_code = type_example(type_gen, def.type_param.id)?;
-            let compact_path = type_gen.resolve_type_path(id);
-            Ok(quote!(#compact_path(#inner_code)))
+            // I used this originally, but it turns out the compact part should be omitted:
+
+            // let compact_path = resolve_type_path_omit_generics(type_gen, id);
+            // Ok(quote!(#compact_path(#inner_code)))
+            Ok(inner_code)
         }
-        scale_info::TypeDef::BitSequence(_def) => Ok(quote!(bitvec::vec::BitVec::new())),
+        scale_info::TypeDef::BitSequence(_def) => {
+            Ok(quote!(subxt::utils::bits::DecodedBits::from_iter([
+                true, false, false
+            ])))
+        }
     }
 }
 
 fn fields_example(
     type_gen: &TypeGenerator,
     fields: &[Field<PortableForm>],
+    unused_type_params: bool,
 ) -> anyhow::Result<TokenStream> {
     let all_named = fields.iter().all(|f| f.name.is_some());
     let all_unnamed = fields.iter().all(|f| f.name.is_none());
@@ -227,7 +243,13 @@ fn fields_example(
                 let value_code = type_example(type_gen, f.ty.id)?;
                 field_idents_and_values.push(quote!(#ident : #value_code));
             }
-            Ok(quote!({ #(#field_idents_and_values),* }))
+            // maybe add phantom data to struct / named composite enum
+            let maybe_phantom = if unused_type_params {
+                quote!( __subxt_unused_type_params: ::core::marker::PhantomData )
+            } else {
+                quote!()
+            };
+            Ok(quote!({ #(#field_idents_and_values ,)* #maybe_phantom }))
         }
         (false, true) => {
             // all fields unnamed
@@ -236,7 +258,7 @@ fn fields_example(
                 let value_code = type_example(type_gen, f.ty.id)?;
                 field_values.push(value_code);
             }
-            Ok(quote!(( #(#field_values),* )))
+            Ok(quote!(( #(#field_values ,)* )))
         }
         (true, true) => {
             // no fields
@@ -291,4 +313,90 @@ fn type_def_is_copy(type_gen: &TypeGenerator, ty: &TypeDef<PortableForm>) -> boo
         }
         _ => false,
     }
+}
+
+// /// This is a workaround, should probably be handled with syn::Expr
+// ///
+// /// e.g. HashMap<u8, u16> => HashMap
+fn resolve_type_path_omit_generics(type_gen: &TypeGenerator, id: u32) -> TokenStream {
+    let path = type_gen.resolve_type_path(id);
+    let path: TokenStream = path
+        .to_token_stream()
+        .into_iter()
+        .take_while(|t| match t {
+            TokenTree::Punct(p) => p.as_char() != '<',
+            _ => true,
+        })
+        .collect();
+    path
+}
+
+/// I know this function has a lot of code duplication, but it should suffice for this prototype.
+///
+/// It is mainly used to check if some phantom data needs to be added to a struct/enum
+fn ty_has_unused_type_parameters(type_gen: &TypeGenerator, ty: &Type<PortableForm>) -> bool {
+    let mut unused: BTreeSet<TypeParameter<PortableForm>> =
+        BTreeSet::from_iter(ty.type_params.iter().cloned());
+
+    match &ty.type_def {
+        TypeDef::Composite(t) => {
+            for f in &t.fields {
+                if let Some(type_name) = &f.type_name {
+                    let field_as_type_param = TypeParameter {
+                        name: type_name.clone(), // not so nice, I know
+                        ty: Some(f.ty),
+                    };
+                    unused.remove(&field_as_type_param);
+                }
+
+                let ty = type_gen.resolve_type(f.ty.id);
+                for param in &ty.type_params {
+                    unused.remove(param);
+                }
+            }
+        }
+        TypeDef::Variant(v) => {
+            for v in &v.variants {
+                for f in &v.fields {
+                    if let Some(type_name) = &f.type_name {
+                        let field_as_type_param = TypeParameter {
+                            name: type_name.clone(), // not so nice, I know
+                            ty: Some(f.ty),
+                        };
+                        unused.remove(&field_as_type_param);
+                    }
+
+                    let ty = type_gen.resolve_type(f.ty.id);
+                    for param in &ty.type_params {
+                        unused.remove(param);
+                    }
+                }
+            }
+        }
+        TypeDef::Tuple(e) => {
+            for f in &e.fields {
+                let ty = type_gen.resolve_type(f.id);
+
+                for param in &ty.type_params {
+                    unused.remove(param);
+                }
+            }
+        }
+        TypeDef::Sequence(TypeDefSequence { type_param })
+        | TypeDef::Array(TypeDefArray { type_param, .. })
+        | TypeDef::Compact(TypeDefCompact { type_param }) => {
+            let ty = type_gen.resolve_type(type_param.id);
+            for param in &ty.type_params {
+                unused.remove(param);
+            }
+        }
+        TypeDef::Primitive(_) | TypeDef::BitSequence(_) => {}
+    };
+
+    let s = format!("{:?}", ty);
+    if s.contains("Equivocation") {
+        dbg!(ty);
+    }
+
+    !unused.is_empty()
 }
