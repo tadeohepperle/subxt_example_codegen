@@ -5,10 +5,14 @@ use subxt_example_codegen::ExampleGenerator;
 
 fn main() -> anyhow::Result<()> {
     let example_gen = ExampleGenerator::polkadot();
+    let t = format!("{:#?}", example_gen.metadata.types());
+    fs::write("type reg", t);
+
     let tokens = example_gen.file_with_all_examples()?;
     let syn_tree = syn::parse_file(&tokens.to_string()).unwrap();
     let pretty = prettyplease::unparse(&syn_tree);
     fs::write("gen/polkadot.rs", pretty)?;
+
     // let t = trybuild::TestCases::new();
     // fs::copy(
     //     "polkadot.scale",

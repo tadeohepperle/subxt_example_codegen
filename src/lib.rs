@@ -9,7 +9,7 @@ use scale_info::{
     TypeDefPrimitive, TypeDefSequence, TypeParameter,
 };
 use subxt::ext::codec::Decode;
-use subxt_codegen::{CratePath, DerivesRegistry, TypeGenerator, TypeSubstitutes};
+use subxt_codegen::{CratePath, DerivesRegistry, TypeDefGen, TypeGenerator, TypeSubstitutes};
 use subxt_metadata::Metadata;
 
 pub enum FileOrUrl {
@@ -20,8 +20,8 @@ pub enum FileOrUrl {
 pub mod polkadot;
 
 pub struct ExampleGenerator {
-    metadata: subxt_metadata::Metadata,
-    file_or_url: FileOrUrl,
+    pub metadata: subxt_metadata::Metadata,
+    pub file_or_url: FileOrUrl,
 }
 
 impl ExampleGenerator {
@@ -96,7 +96,7 @@ impl ExampleGenerator {
             let field_type_path =
                 type_gen.resolve_field_type_path(field.ty.id, &[], field.type_name.as_deref());
 
-            let field_type_example = type_example(type_gen, field.ty.id)?;
+            let field_type_example = type_example(type_gen, field.ty.id, CompactMode::Attr)?;
 
             // put it together as a variable declaration
             let declaration = quote!(let #field_name : #field_type_path = #field_type_example;);
@@ -151,21 +151,39 @@ impl ExampleGenerator {
     }
 }
 
-fn type_example(type_gen: &TypeGenerator, id: u32) -> anyhow::Result<TokenStream> {
+pub enum CompactMode {
+    // explicitely stating Compact(u32)
+    Expl,
+    // compact encoded via attribute #[codec(compact)]
+    Attr,
+}
+
+fn type_example(
+    type_gen: &TypeGenerator,
+    id: u32,
+    compact_mode: CompactMode,
+) -> anyhow::Result<TokenStream> {
     let ty = type_gen.resolve_type(id);
-    type_def_example(type_gen, id, &ty)
+    type_def_example(type_gen, id, &ty, compact_mode)
 }
 
 fn type_def_example(
     type_gen: &TypeGenerator,
     id: u32,
     ty: &Type<PortableForm>,
+    compact_mode: CompactMode,
 ) -> anyhow::Result<TokenStream> {
-    let unused_type_params = ty_has_unused_type_parameters(type_gen, ty);
     match &ty.type_def {
         scale_info::TypeDef::Composite(def) => {
             let struct_path = resolve_type_path_omit_generics(type_gen, id);
-            let fields: TokenStream = fields_example(type_gen, &def.fields, unused_type_params)?;
+            let gen_for_unsused_params =
+                TypeDefGen::from_type(ty, type_gen, &CratePath::default(), false)
+                    .expect("should work");
+            let fields: TokenStream = fields_example(
+                type_gen,
+                &def.fields,
+                gen_for_unsused_params.has_unused_type_params(),
+            )?;
             Ok(quote!(#struct_path #fields))
         }
         scale_info::TypeDef::Variant(def) => {
@@ -176,19 +194,23 @@ fn type_def_example(
                 .first()
                 .ok_or(anyhow!("variant type should have at least one variant"))?;
             let variant_ident = format_ident!("{}", &first_variant.name);
-            let fields = fields_example(type_gen, &first_variant.fields, unused_type_params)?;
+            // Technically we also need for phantom types here, but that is quite difficult at the moment, because we only want to check for a single variant, and TypeDefGen does not support that right now
+            // So for now, we set it to false.
+            let fields = fields_example(type_gen, &first_variant.fields, false)?;
             Ok(quote!(#enum_path:: #variant_ident #fields))
         }
         scale_info::TypeDef::Sequence(def) => {
             // return a Vec with 2 elements:
             let inner_ty = type_gen.resolve_type(def.type_param.id);
-            let item_code = type_def_example(type_gen, def.type_param.id, &inner_ty)?;
+            let item_code =
+                type_def_example(type_gen, def.type_param.id, &inner_ty, CompactMode::Expl)?;
             let vec_code = quote!(vec![#item_code, #item_code]);
             Ok(vec_code)
         }
         scale_info::TypeDef::Array(def) => {
             let inner_ty = type_gen.resolve_type(def.type_param.id);
-            let item_code = type_def_example(type_gen, def.type_param.id, &inner_ty)?;
+            let item_code =
+                type_def_example(type_gen, def.type_param.id, &inner_ty, CompactMode::Expl)?;
             let inner_is_copy = type_def_is_copy(type_gen, &inner_ty.type_def);
             let len = def.len as usize;
             let arr_code = if inner_is_copy {
@@ -204,19 +226,34 @@ fn type_def_example(
         scale_info::TypeDef::Tuple(def) => {
             let mut fields: Vec<TokenStream> = vec![];
             for f in &def.fields {
-                let value = type_example(type_gen, f.id)?;
+                let value = type_example(type_gen, f.id, CompactMode::Expl)?;
                 fields.push(value)
             }
             Ok(quote!(( #(#fields),* )))
         }
         scale_info::TypeDef::Primitive(def) => Ok(primitive_example(def)),
         scale_info::TypeDef::Compact(def) => {
-            let inner_code = type_example(type_gen, def.type_param.id)?;
+            // there are actually two possibilities here:
+            // 1. the value is not actually compact but just tagged with { #[codec(compact)] number: u8 } in the type definition.
+            // --> give a normal primitive as a type example, e.g. 8
+            // 2. the value is actually like (Compact<u8>, String) in the type definition.
+            // --> give compact type example, e.g. Compact(8)
+
+            // How to find out? In structs, we are gonna be in case 1, otherwise (inside a tuple, array or vec) where the #[codec(compact)] is not possible, we are in case 2.
+            // `explicit_compact` flag is used to indicate we are in case 2.
+
+            let inner_code = type_example(type_gen, def.type_param.id, CompactMode::Expl)?;
             // I used this originally, but it turns out the compact part should be omitted:
 
-            // let compact_path = resolve_type_path_omit_generics(type_gen, id);
-            // Ok(quote!(#compact_path(#inner_code)))
-            Ok(inner_code)
+            let code = match compact_mode {
+                CompactMode::Expl => {
+                    let compact_path = resolve_type_path_omit_generics(type_gen, id);
+                    quote!(#compact_path(#inner_code))
+                }
+                CompactMode::Attr => inner_code,
+            };
+
+            Ok(code)
         }
         scale_info::TypeDef::BitSequence(_def) => {
             Ok(quote!(subxt::utils::bits::DecodedBits::from_iter([
@@ -229,7 +266,7 @@ fn type_def_example(
 fn fields_example(
     type_gen: &TypeGenerator,
     fields: &[Field<PortableForm>],
-    unused_type_params: bool,
+    has_unused_type_params: bool,
 ) -> anyhow::Result<TokenStream> {
     let all_named = fields.iter().all(|f| f.name.is_some());
     let all_unnamed = fields.iter().all(|f| f.name.is_none());
@@ -240,11 +277,11 @@ fn fields_example(
             for f in fields {
                 let name = f.name.as_ref().expect("safe because of check above; qed");
                 let ident = format_ident!("{name}");
-                let value_code = type_example(type_gen, f.ty.id)?;
+                let value_code = type_example(type_gen, f.ty.id, CompactMode::Attr)?;
                 field_idents_and_values.push(quote!(#ident : #value_code));
             }
             // maybe add phantom data to struct / named composite enum
-            let maybe_phantom = if unused_type_params {
+            let maybe_phantom = if has_unused_type_params {
                 quote!( __subxt_unused_type_params: ::core::marker::PhantomData )
             } else {
                 quote!()
@@ -255,10 +292,16 @@ fn fields_example(
             // all fields unnamed
             let mut field_values: Vec<TokenStream> = vec![];
             for f in fields {
-                let value_code = type_example(type_gen, f.ty.id)?;
+                let value_code = type_example(type_gen, f.ty.id, CompactMode::Attr)?;
                 field_values.push(value_code);
             }
-            Ok(quote!(( #(#field_values ,)* )))
+            // maybe add phantom data to struct / named composite enum
+            let maybe_phantom = if has_unused_type_params {
+                quote!(::core::marker::PhantomData)
+            } else {
+                quote!()
+            };
+            Ok(quote!(( #(#field_values ,)* #maybe_phantom )))
         }
         (true, true) => {
             // no fields
@@ -329,74 +372,4 @@ fn resolve_type_path_omit_generics(type_gen: &TypeGenerator, id: u32) -> TokenSt
         })
         .collect();
     path
-}
-
-/// I know this function has a lot of code duplication, but it should suffice for this prototype.
-///
-/// It is mainly used to check if some phantom data needs to be added to a struct/enum
-fn ty_has_unused_type_parameters(type_gen: &TypeGenerator, ty: &Type<PortableForm>) -> bool {
-    let mut unused: BTreeSet<TypeParameter<PortableForm>> =
-        BTreeSet::from_iter(ty.type_params.iter().cloned());
-
-    match &ty.type_def {
-        TypeDef::Composite(t) => {
-            for f in &t.fields {
-                if let Some(type_name) = &f.type_name {
-                    let field_as_type_param = TypeParameter {
-                        name: type_name.clone(), // not so nice, I know
-                        ty: Some(f.ty),
-                    };
-                    unused.remove(&field_as_type_param);
-                }
-
-                let ty = type_gen.resolve_type(f.ty.id);
-                for param in &ty.type_params {
-                    unused.remove(param);
-                }
-            }
-        }
-        TypeDef::Variant(v) => {
-            for v in &v.variants {
-                for f in &v.fields {
-                    if let Some(type_name) = &f.type_name {
-                        let field_as_type_param = TypeParameter {
-                            name: type_name.clone(), // not so nice, I know
-                            ty: Some(f.ty),
-                        };
-                        unused.remove(&field_as_type_param);
-                    }
-
-                    let ty = type_gen.resolve_type(f.ty.id);
-                    for param in &ty.type_params {
-                        unused.remove(param);
-                    }
-                }
-            }
-        }
-        TypeDef::Tuple(e) => {
-            for f in &e.fields {
-                let ty = type_gen.resolve_type(f.id);
-
-                for param in &ty.type_params {
-                    unused.remove(param);
-                }
-            }
-        }
-        TypeDef::Sequence(TypeDefSequence { type_param })
-        | TypeDef::Array(TypeDefArray { type_param, .. })
-        | TypeDef::Compact(TypeDefCompact { type_param }) => {
-            let ty = type_gen.resolve_type(type_param.id);
-            for param in &ty.type_params {
-                unused.remove(param);
-            }
-        }
-        TypeDef::Primitive(_) | TypeDef::BitSequence(_) => {}
-    };
-
-    let s = format!("{:?}", ty);
-    if s.contains("Equivocation") {
-        dbg!(ty);
-    }
-
-    !unused.is_empty()
 }
