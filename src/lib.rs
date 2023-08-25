@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, fmt::Display};
 
 use anyhow::{anyhow, Ok};
 use heck::ToSnakeCase;
@@ -6,11 +6,13 @@ use proc_macro2::{Ident, Punct, TokenStream, TokenTree};
 use quote::{format_ident, quote, ToTokens};
 use scale_info::{
     form::PortableForm, Field, PortableRegistry, Type, TypeDef, TypeDefArray, TypeDefCompact,
-    TypeDefPrimitive, TypeDefSequence, TypeParameter,
+    TypeDefPrimitive, TypeDefSequence, TypeParameter, Variant,
 };
 use subxt::ext::codec::Decode;
-use subxt_codegen::{CratePath, DerivesRegistry, TypeDefGen, TypeGenerator, TypeSubstitutes};
-use subxt_metadata::Metadata;
+use subxt_codegen::{
+    CratePath, DerivesRegistry, RuntimeGenerator, TypeDefGen, TypeGenerator, TypeSubstitutes,
+};
+use subxt_metadata::{Metadata, PalletMetadata, StorageEntryMetadata, StorageEntryType};
 
 pub enum FileOrUrl {
     File(String),
@@ -28,7 +30,8 @@ impl ExampleGenerator {
     pub fn polkadot() -> Self {
         let polkadot_scale_path = "polkadot.scale";
         let bytes = std::fs::read(polkadot_scale_path).expect("works");
-        let metadata = Metadata::decode(&mut &bytes[..]).expect("works");
+        let mut metadata = Metadata::decode(&mut &bytes[..]).expect("works");
+        RuntimeGenerator::ensure_unique_type_paths(&mut metadata);
         Self {
             metadata,
             file_or_url: FileOrUrl::File(polkadot_scale_path.into()),
@@ -37,12 +40,19 @@ impl ExampleGenerator {
 
     pub fn file_with_all_examples(&self) -> anyhow::Result<TokenStream> {
         let mut call_examples: Vec<TokenStream> = vec![];
-        for p in self.metadata.pallets() {
-            if let Some(variants) = p.call_variants() {
-                for c in variants {
-                    let call_example = self.call_example(p.name(), &c.name)?;
+        let mut storage_examples: Vec<TokenStream> = vec![];
+        for pallet in self.metadata.pallets() {
+            if let Some(calls) = pallet.call_variants() {
+                for call in calls {
+                    let call_example = self.call_example(pallet.name(), &call.name)?;
                     call_examples.push(call_example);
-                    // break 'o;
+                }
+            }
+
+            if let Some(storage) = pallet.storage() {
+                for entry in storage.entries() {
+                    let storage_example = self.call_example(pallet.name(), entry.name())?;
+                    storage_examples.push(storage_example);
                 }
             }
         }
@@ -64,21 +74,54 @@ impl ExampleGenerator {
         Ok(code)
     }
 
-    fn call_example_payload(
-        &self,
-        type_gen: &TypeGenerator,
-        pallet_name: &str,
-        call_name: &str,
-    ) -> anyhow::Result<TokenStream> {
-        let pallet_metadata = self
+    pub fn call_example(&self, pallet_name: &str, call_name: &str) -> anyhow::Result<TokenStream> {
+        let type_gen = self.new_type_gen();
+        let pallet = self
             .metadata
             .pallet_by_name(pallet_name)
             .expect("should be there");
-        let pallet_name = format_ident!("{}", pallet_name.to_snake_case());
-        let call = pallet_metadata
+        let call = pallet
             .call_variant_by_name(call_name)
             .expect("should be there");
-        let call_name = format_ident!("{}", call_name.to_snake_case());
+        // defines: let payload = ...
+        let payload_code = self.call_example_payload(&type_gen, &pallet, call)?;
+        let code = quote!(
+            #payload_code
+            let api = OnlineClient::<PolkadotConfig>::new().await?;
+            let from = dev::alice();
+            let events = api
+                .tx()
+                .sign_and_submit_then_watch_default(&payload, &from)
+                .await?
+                .wait_for_finalized_success()
+                .await?;
+        );
+
+        Ok(code)
+    }
+
+    /// the returned code defines: `let payload = ...`
+    fn call_example_payload(
+        &self,
+        type_gen: &TypeGenerator,
+        pallet: &PalletMetadata,
+        call: &Variant<PortableForm>,
+    ) -> anyhow::Result<TokenStream> {
+        let pallet_name = format_ident!("{}", pallet.name().to_snake_case());
+        let call_name = format_ident!("{}", call.name.to_snake_case());
+
+        let variable_iter = call.fields.iter().map(|field| {
+            let name: &str = field
+                .name
+                .as_ref()
+                .expect("only named fields should be call arguments");
+            let type_path =
+                type_gen.resolve_field_type_path(field.ty.id, &[], field.type_name.as_deref());
+            (name, field.ty.id, type_path)
+        });
+
+        let (field_names, field_declarations) =
+            variable_names_and_declarations(type_gen, variable_iter)?;
 
         let mut field_names: Vec<Ident> = vec![];
         let mut field_declarations: Vec<TokenStream> = vec![];
@@ -110,21 +153,64 @@ impl ExampleGenerator {
         Ok(code)
     }
 
-    pub fn call_example(&self, pallet_name: &str, call_name: &str) -> anyhow::Result<TokenStream> {
+    pub fn storage_example(
+        &self,
+        pallet_name: &str,
+        storage_item: &str,
+    ) -> anyhow::Result<TokenStream> {
         let type_gen = self.new_type_gen();
-        let payload_code = self.call_example_payload(&type_gen, pallet_name, call_name)?;
+        let pallet = self
+            .metadata
+            .pallet_by_name(pallet_name)
+            .expect("should be there");
+        let entry = pallet
+            .storage()
+            .expect("should be there")
+            .entry_by_name(storage_item)
+            .expect("should be there");
+
+        let storage_query_code = self.storage_example_query(&type_gen, &pallet, entry)?;
+
+        // todo: add return type
         let code = quote!(
-            #payload_code
+            #storage_query_code
             let api = OnlineClient::<PolkadotConfig>::new().await?;
-            let from = dev::alice();
-            let events = api
-               .tx()
-               .sign_and_submit_then_watch_default(&payload, &from)
-               .await?
-               .wait_for_finalized_success()
-               .await?;
+            let result = api
+                .storage()
+                .at_latest()
+                .await?
+                .fetch(&storage_query)
+                .await?;
         );
 
+        Ok(code)
+    }
+
+    /// the returned code defines: `let storage_query = ...`
+    fn storage_example_query(
+        &self,
+        type_gen: &TypeGenerator,
+        pallet: &PalletMetadata,
+        entry: &StorageEntryMetadata,
+    ) -> anyhow::Result<TokenStream> {
+        let pallet_name = format_ident!("{}", pallet.name().to_snake_case());
+        let entry_name = format_ident!("{}", entry.name().to_snake_case());
+
+        let variables_iter = storage_entry_key_ty_ids(type_gen, entry)
+            .into_iter()
+            .enumerate()
+            .map(|(i, type_id)| {
+                let variable_name = format!("key_{i}");
+                let type_path = type_gen.resolve_type_path(type_id);
+                (variable_name, type_id, type_path)
+            });
+        let (variable_names, variable_declarations) =
+            variable_names_and_declarations(type_gen, variables_iter)?;
+
+        let code = quote!(
+            #(#variable_declarations);*
+            let storage_query = polkadot::storage().#pallet_name().#entry_name( #(#variable_names),*);
+        );
         Ok(code)
     }
 
@@ -156,6 +242,40 @@ pub enum CompactMode {
     Expl,
     // compact encoded via attribute #[codec(compact)]
     Attr,
+}
+
+fn storage_entry_key_ty_ids(type_gen: &TypeGenerator, entry: &StorageEntryMetadata) -> Vec<u32> {
+    match entry.entry_type() {
+        StorageEntryType::Plain(_) => vec![],
+        StorageEntryType::Map { key_ty, .. } => {
+            match &type_gen.resolve_type(*key_ty).type_def {
+                // An N-map; return each of the keys separately.
+                TypeDef::Tuple(tuple) => tuple.fields.iter().map(|ty| ty.id).collect::<Vec<_>>(),
+                // A map with a single key; return the single key.
+                _ => vec![*key_ty],
+            }
+        }
+    }
+}
+
+/// the iterator item is (variable_name, type_id, type_path)
+fn variable_names_and_declarations<'a>(
+    type_gen: &TypeGenerator,
+    variables: impl Iterator<Item = (impl Display, u32, impl ToTokens)>,
+) -> anyhow::Result<(Vec<Ident>, Vec<TokenStream>)> {
+    let mut variable_names: Vec<Ident> = vec![];
+    let mut variable_declarations: Vec<TokenStream> = vec![];
+
+    for (variable_name, type_id, type_path) in variables {
+        let variable_name = format_ident!("{variable_name}");
+        let type_example = type_example(type_gen, type_id, CompactMode::Attr)?;
+        // put it together as a variable declaration
+        let declaration = quote!(let #variable_name : #type_path = #type_example;);
+        variable_names.push(variable_name);
+        variable_declarations.push(declaration);
+    }
+
+    Ok((variable_names, variable_declarations))
 }
 
 fn type_example(

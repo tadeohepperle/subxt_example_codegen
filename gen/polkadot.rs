@@ -5702,10 +5702,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let message: runtime_types::xcm::VersionedXcm = runtime_types::xcm::VersionedXcm::V2(
-        runtime_types::xcm::v2::Xcm(
+    let message: runtime_types::xcm::VersionedXcm2 = runtime_types::xcm::VersionedXcm2::V2(
+        runtime_types::xcm::v2::Xcm2(
             vec![
-                runtime_types::xcm::v2::Instruction::WithdrawAsset(runtime_types::xcm::v2::multiasset::MultiAssets(vec![runtime_types::xcm::v2::multiasset::MultiAsset
+                runtime_types::xcm::v2::Instruction2::WithdrawAsset(runtime_types::xcm::v2::multiasset::MultiAssets(vec![runtime_types::xcm::v2::multiasset::MultiAsset
                 { id :
                 runtime_types::xcm::v2::multiasset::AssetId::Concrete(runtime_types::xcm::v2::multilocation::MultiLocation
                 { parents : 8, interior :
@@ -5716,7 +5716,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
                 { parents : 8, interior :
                 runtime_types::xcm::v2::multilocation::Junctions::Here, },), fun :
                 runtime_types::xcm::v2::multiasset::Fungibility::Fungible(128,), }],),),
-                runtime_types::xcm::v2::Instruction::WithdrawAsset(runtime_types::xcm::v2::multiasset::MultiAssets(vec![runtime_types::xcm::v2::multiasset::MultiAsset
+                runtime_types::xcm::v2::Instruction2::WithdrawAsset(runtime_types::xcm::v2::multiasset::MultiAssets(vec![runtime_types::xcm::v2::multiasset::MultiAsset
                 { id :
                 runtime_types::xcm::v2::multiasset::AssetId::Concrete(runtime_types::xcm::v2::multilocation::MultiLocation
                 { parents : 8, interior :
