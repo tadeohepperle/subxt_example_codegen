@@ -1,27 +1,35 @@
-use std::fs;
+use std::{env::args, fs};
 
 use subxt::utils::bits::DecodedBits;
 use subxt_example_codegen::ExampleGenerator;
 
+/// Make sure you have a `polkadot.scale` file at the root of this project.
+///
+/// Use `cargo run` to just generate a file with all examples for `polkadot.scale` under `gen/polkadot.rs`.
+/// You can copy this file into the empty `src/polkadot.rs` to have it included in the module tree and checked by rust analyzer.
+///
+/// Use `cargo run -- build` to make use of `trybuild`. It will build the generated `gen/polkadot.rs` file and report any errors.
 fn main() -> anyhow::Result<()> {
     let example_gen = ExampleGenerator::polkadot();
-    let t = format!("{:#?}", example_gen.metadata.types());
-    fs::write("type reg", t);
+    let tokens = example_gen.all_examples_wrapped()?;
+    // you can also try something like this instead:
+    // let tokens = example_gen.call_example_wrapped("Balances", "transfer")?;
 
-    let tokens = example_gen.file_with_all_examples()?;
     let syn_tree = syn::parse_file(&tokens.to_string()).unwrap();
     let pretty = prettyplease::unparse(&syn_tree);
     fs::write("gen/polkadot.rs", pretty)?;
 
-    // let t = trybuild::TestCases::new();
-    // fs::copy(
-    //     "polkadot.scale",
-    //     "target/tests/trybuild/subxt_example_codegen/polkadot.scale",
-    // )?;
-    // t.pass("gen/polkadot.rs");
+    // if executed with `cargo run -- build` we use trybuild to validate the generated code.
+    // note: trybuild expects and executes `pub fn main()` in the generated code.
+    if args().skip(1).next() == Some("build".into()) {
+        let test_cases = trybuild::TestCases::new();
+        // necessary to let macro work in build:
+        fs::copy(
+            "polkadot.scale",
+            "target/tests/trybuild/subxt_example_codegen/polkadot.scale",
+        )?;
+        test_cases.pass("gen/polkadot.rs");
+    }
+
     Ok(())
 }
-
-// mismatched types
-// expected struct `DecodedBits<u8, subxt::utils::bits::Lsb0>`
-//    found struct `BitVec<_, _>

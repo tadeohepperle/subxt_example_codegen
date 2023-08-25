@@ -1,3 +1,29 @@
+//! This crate exposes a struct [ExampleGenerator] that is capable of generating code examples for calls, constants and storage entries from static metadata.
+//! The generated code can look like this:
+//!
+//! ```rust,norun
+//! #[subxt::subxt(runtime_metadata_path = "polkadot.scale")]
+//! pub mod polkadot {}
+//! use polkadot::runtime_types;
+//! use subxt::{OnlineClient, PolkadotConfig};
+//! use subxt_signer::sr25519::dev;
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> =
+//!         ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize]));
+//!     let value: ::core::primitive::u128 = 128;
+//!     let payload = polkadot::tx().balances().transfer(dest, value);
+//!     let api = OnlineClient::<PolkadotConfig>::new().await?;
+//!     let from = dev::alice();
+//!     let events = api
+//!         .tx()
+//!         .sign_and_submit_then_watch_default(&payload, &from)
+//!         .await?
+//!         .wait_for_finalized_success()
+//!         .await?;
+//!     Ok(())
+//! }
+//! ```
+
 use std::{collections::BTreeSet, fmt::Display};
 
 use anyhow::{anyhow, Ok};
@@ -19,14 +45,27 @@ pub enum FileOrUrl {
     Url(String),
 }
 
-pub mod polkadot;
+/// empty mod, copy paste stuff in here to validate code quickly
+mod polkadot;
 
+/// The [ExampleGenerator] is a struct that can be used to generate code examples for various uses of subxt.
+/// It is intended to be embedded into the WASM of a website, to create code snippets to be displayed.
+/// It exposes these methods:
+/// - `all_examples_wrapped()`
+/// - `call_example_wrapped(pallet_name, call_name)`
+/// - `storage_example_wrapped(, entry_name)`
+/// - `constant_example_wrapped(constant_name, constant_name)`
+///
+/// which all generate some executable rust code that should contain all imports
 pub struct ExampleGenerator {
     pub metadata: subxt_metadata::Metadata,
-    pub file_or_url: FileOrUrl,
+    /// currently not used. Will be used later to inform how the subxt macro is generated.
+    /// Can also be used used later to make for an async constructor that fetches the metadata from this location.
+    _file_or_url: FileOrUrl,
 }
 
 impl ExampleGenerator {
+    /// Creates an `ExampleGenerator` configures for polkadot. Expects a "./polkadot.scale" file with metadata to be present.
     pub fn polkadot() -> Self {
         let polkadot_scale_path = "polkadot.scale";
         let bytes = std::fs::read(polkadot_scale_path).expect("works");
@@ -34,13 +73,18 @@ impl ExampleGenerator {
         RuntimeGenerator::ensure_unique_type_paths(&mut metadata);
         Self {
             metadata,
-            file_or_url: FileOrUrl::File(polkadot_scale_path.into()),
+            _file_or_url: FileOrUrl::File(polkadot_scale_path.into()),
         }
     }
 
-    pub fn file_with_all_examples(&self) -> anyhow::Result<TokenStream> {
+    /// Creates code that contains with example code for all calls, cosntants and storage entries.
+    /// If this code compiles, we can be pretty sure, that the code generation worked fine.
+    /// Can be tested with e.g. trybuild.
+    pub fn all_examples_wrapped(&self) -> anyhow::Result<TokenStream> {
         let mut call_examples: Vec<TokenStream> = vec![];
         let mut storage_examples: Vec<TokenStream> = vec![];
+        let mut constant_examples: Vec<TokenStream> = vec![];
+
         for pallet in self.metadata.pallets() {
             if let Some(calls) = pallet.call_variants() {
                 for call in calls {
@@ -51,26 +95,48 @@ impl ExampleGenerator {
 
             if let Some(storage) = pallet.storage() {
                 for entry in storage.entries() {
-                    let storage_example = self.call_example(pallet.name(), entry.name())?;
+                    let storage_example = self.storage_example(pallet.name(), entry.name())?;
                     storage_examples.push(storage_example);
                 }
             }
-        }
-        let imports_and_static_interface = self.imports_and_static_interface();
 
-        let code = quote!(
-            #imports_and_static_interface
-
-            // main is run by trybuild, but we dont want to run anything
-            pub fn main() {}
-
-            // we just need to make sure this compiles
-            async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
-                #(#call_examples)*
-
-                Ok(())
+            for constant in pallet.constants() {
+                let constant_example = self.constant_example(pallet.name(), constant.name())?;
+                constant_examples.push(constant_example);
             }
+        }
+
+        // we provide an empty main function, because `trybuild` attempts to run it. But we don't want to run code, just check that it compiles.
+        let code = wrap_with_imports(
+            quote!(
+                #(#call_examples)*
+                #(#storage_examples)*
+                #(#constant_examples)*
+            ),
+            "wrapper",
+            quote!(
+                pub fn main() {}
+            ),
         );
+
+        Ok(code)
+    }
+
+    /// create an executable example (with ) with the specified call
+    pub fn call_example_wrapped(
+        &self,
+        pallet_name: &str,
+        call_name: &str,
+    ) -> anyhow::Result<TokenStream> {
+        let call_example = self.call_example(pallet_name, call_name)?;
+        let code = wrap_with_imports(
+            quote!(
+                #call_example
+            ),
+            "main",
+            quote!(),
+        );
+
         Ok(code)
     }
 
@@ -134,7 +200,6 @@ impl ExampleGenerator {
             let field_name = format_ident!("{field_name}");
             field_names.push(field_name.clone());
 
-            // get the field type path:
             // todo!("shorten the path, we do not want ::std::vec::Vec<::core::primitive::u8> in examples, Vec<u8> is good enough")
             let field_type_path =
                 type_gen.resolve_field_type_path(field.ty.id, &[], field.type_name.as_deref());
@@ -153,7 +218,23 @@ impl ExampleGenerator {
         Ok(code)
     }
 
-    pub fn storage_example(
+    pub fn storage_example_wrapped(
+        &self,
+        pallet_name: &str,
+        storage_item: &str,
+    ) -> anyhow::Result<TokenStream> {
+        let storage_example = self.storage_example(pallet_name, storage_item)?;
+        let code = wrap_with_imports(
+            quote!(
+                #storage_example
+            ),
+            "main",
+            quote!(#[tokio::main]),
+        );
+        Ok(code)
+    }
+
+    fn storage_example(
         &self,
         pallet_name: &str,
         storage_item: &str,
@@ -171,11 +252,13 @@ impl ExampleGenerator {
 
         let storage_query_code = self.storage_example_query(&type_gen, &pallet, entry)?;
 
-        // todo: add return type
+        let value_type = entry.entry_type().value_ty();
+        let value_type_path = type_gen.resolve_type_path(value_type);
+
         let code = quote!(
             #storage_query_code
             let api = OnlineClient::<PolkadotConfig>::new().await?;
-            let result = api
+            let result : Option<#value_type_path> = api
                 .storage()
                 .at_latest()
                 .await?
@@ -214,7 +297,50 @@ impl ExampleGenerator {
         Ok(code)
     }
 
-    pub fn new_type_gen(&self) -> TypeGenerator {
+    pub fn constant_example_wrapped(
+        &self,
+        pallet_name: &str,
+        constant_name: &str,
+    ) -> anyhow::Result<TokenStream> {
+        let constant_example = self.constant_example(pallet_name, constant_name)?;
+        let code = wrap_with_imports(
+            quote!(
+                #constant_example
+            ),
+            "main",
+            quote!(#[tokio::main]),
+        );
+        Ok(code)
+    }
+
+    fn constant_example(
+        &self,
+        pallet_name: &str,
+        constant_name: &str,
+    ) -> anyhow::Result<TokenStream> {
+        let type_gen = self.new_type_gen();
+        let pallet = self
+            .metadata
+            .pallet_by_name(pallet_name)
+            .expect("should be there");
+        let constant = pallet
+            .constant_by_name(constant_name)
+            .expect("should be there");
+        let constant_type_path = type_gen.resolve_type_path(constant.ty());
+
+        let pallet_name = format_ident!("{}", pallet.name().to_snake_case());
+        let constant_name = format_ident!("{}", constant.name().to_snake_case());
+
+        let code = quote!(
+            let constant_query = polkadot::constants().#pallet_name().#constant_name();
+            let api = OnlineClient::<PolkadotConfig>::new().await?;
+            let value : #constant_type_path = api.constants().at(&constant_query)?;
+        );
+
+        Ok(code)
+    }
+
+    fn new_type_gen(&self) -> TypeGenerator {
         TypeGenerator::new(
             self.metadata.types(),
             "runtime_types",
@@ -224,17 +350,6 @@ impl ExampleGenerator {
             true,
         )
     }
-
-    fn imports_and_static_interface(&self) -> TokenStream {
-        quote!(
-            #[subxt::subxt(runtime_metadata_path = "polkadot.scale")]
-            pub mod polkadot {}
-            use polkadot::runtime_types;
-
-            use subxt::{OnlineClient, PolkadotConfig};
-            use subxt_signer::sr25519::dev;
-        )
-    }
 }
 
 pub enum CompactMode {
@@ -242,6 +357,34 @@ pub enum CompactMode {
     Expl,
     // compact encoded via attribute #[codec(compact)]
     Attr,
+}
+
+/// Takes some inner code and adds:
+/// - imports for some subxt types
+/// - static interface via subxt macro referencing polkadot.scale
+/// - an async wrapper function that wraps #inner
+fn wrap_with_imports(
+    inner: impl ToTokens,
+    wrapper_fn_name: &str,
+    code_before_wrapper: impl ToTokens,
+) -> TokenStream {
+    let wrapper_fn_ident = format_ident!("{}", wrapper_fn_name);
+    quote!(
+        #[subxt::subxt(runtime_metadata_path = "polkadot.scale")]
+        pub mod polkadot {}
+        use polkadot::runtime_types;
+
+        use subxt::{OnlineClient, PolkadotConfig};
+        use subxt_signer::sr25519::dev;
+
+        #code_before_wrapper
+        async fn #wrapper_fn_ident() -> Result<(), Box<dyn std::error::Error>> {
+            #inner
+            Ok(())
+        }
+
+
+    )
 }
 
 fn storage_entry_key_ty_ids(type_gen: &TypeGenerator, entry: &StorageEntryMetadata) -> Vec<u32> {
@@ -258,7 +401,7 @@ fn storage_entry_key_ty_ids(type_gen: &TypeGenerator, entry: &StorageEntryMetada
     }
 }
 
-/// the iterator item is (variable_name, type_id, type_path)
+/// The iterator item is: (variable_name, type_id, type_path)
 fn variable_names_and_declarations<'a>(
     type_gen: &TypeGenerator,
     variables: impl Iterator<Item = (impl Display, u32, impl ToTokens)>,
@@ -454,7 +597,7 @@ fn primitive_example(def: &TypeDefPrimitive) -> TokenStream {
     }
 }
 
-/// Simple Heuristics. Just makes array initialization easier if is `Copy`.
+/// Simple Heuristics. Just makes array initialization shorter if is `Copy`.
 fn type_def_is_copy(type_gen: &TypeGenerator, ty: &TypeDef<PortableForm>) -> bool {
     match ty {
         TypeDef::Primitive(def) => match def {
@@ -478,9 +621,9 @@ fn type_def_is_copy(type_gen: &TypeGenerator, ty: &TypeDef<PortableForm>) -> boo
     }
 }
 
-// /// This is a workaround, should probably be handled with syn::Expr
-// ///
-// /// e.g. HashMap<u8, u16> => HashMap
+/// Converts e.g. HashMap<u8, u16> => HashMap
+///
+/// This is a workaround, should probably be handled with syn::Expr somehow
 fn resolve_type_path_omit_generics(type_gen: &TypeGenerator, id: u32) -> TokenStream {
     let path = type_gen.resolve_type_path(id);
     let path: TokenStream = path
