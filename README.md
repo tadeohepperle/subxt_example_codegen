@@ -2,8 +2,6 @@
 
 Note: This is a Prototype / Proof of Concept
 
-Note: The crate reliese on a
-
 This crate exposes a struct `ExampleGenerator` that is capable of generating code examples for calls, constants and storage entries from static metadata.
 The generated code can look like this:
 
