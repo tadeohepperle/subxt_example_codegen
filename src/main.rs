@@ -9,6 +9,8 @@ use subxt_example_codegen::ExampleGenerator;
 /// You can copy this file into the empty `src/polkadot.rs` to have it included in the module tree and checked by rust analyzer.
 ///
 /// Use `cargo run -- build` to make use of `trybuild`. It will build the generated `gen/polkadot.rs` file and report any errors.
+///
+/// The directory `./alternative_metadata` contains different metadata files that can quickly replace the `./polkadot.scale` to see if codegen still works.
 fn main() -> anyhow::Result<()> {
     let example_gen = ExampleGenerator::polkadot();
     let tokens = example_gen.all_examples_wrapped()?;
