@@ -12,14 +12,17 @@ use subxt_example_codegen::ExampleGenerator;
 ///
 /// The directory `./alternative_metadata` contains different metadata files that can quickly replace the `./polkadot.scale` to see if codegen still works.
 fn main() -> anyhow::Result<()> {
-    let example_gen = ExampleGenerator::polkadot();
+    let metadata_file = "polkadot.scale";
+    let example_gen = ExampleGenerator::from_file(metadata_file)?;
     let tokens = example_gen.all_examples_wrapped()?;
+
     // you can also try something like this instead:
     // let tokens = example_gen.call_example_wrapped("Balances", "transfer")?;
+    // let tokens = example_gen.custom_value_example_wrapped("Foo")?;
 
     let syn_tree = syn::parse_file(&tokens.to_string()).unwrap();
     let pretty = prettyplease::unparse(&syn_tree);
-    fs::write("gen/polkadot.rs", pretty)?;
+    fs::write("gen/generated.rs", pretty)?;
 
     // if executed with `cargo run -- build` we use trybuild to validate the generated code.
     // note: trybuild expects and executes `pub fn main()` in the generated code.
@@ -27,10 +30,10 @@ fn main() -> anyhow::Result<()> {
         let test_cases = trybuild::TestCases::new();
         // necessary to let macro work in build:
         fs::copy(
-            "polkadot.scale",
-            "target/tests/trybuild/subxt_example_codegen/polkadot.scale",
+            metadata_file,
+            format!("target/tests/trybuild/subxt_example_codegen/{metadata_file}"),
         )?;
-        test_cases.pass("gen/polkadot.rs");
+        test_cases.pass("gen/generated.rs");
     }
 
     Ok(())

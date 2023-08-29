@@ -3,15 +3,15 @@
 //!
 //! ```rust,norun
 //! #[subxt::subxt(runtime_metadata_path = "polkadot.scale")]
-//! pub mod polkadot {}
-//! use polkadot::runtime_types;
+//! pub mod runtime {}
+//! use runtime::runtime_types;
 //! use subxt::{OnlineClient, PolkadotConfig};
 //! use subxt_signer::sr25519::dev;
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> =
 //!         ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize]));
 //!     let value: ::core::primitive::u128 = 128;
-//!     let payload = polkadot::tx().balances().transfer(dest, value);
+//!     let payload = runtime::tx().balances().transfer(dest, value);
 //!     let api = OnlineClient::<PolkadotConfig>::new().await?;
 //!     let from = dev::alice();
 //!     let events = api
@@ -46,7 +46,7 @@ pub enum FileOrUrl {
 }
 
 /// empty mod, copy paste stuff in here to validate code quickly
-mod polkadot;
+mod generated;
 
 /// The [ExampleGenerator] is a struct that can be used to generate code examples for various uses of subxt.
 /// It is intended to be embedded into the WASM of a website, to create code snippets to be displayed.
@@ -61,20 +61,19 @@ pub struct ExampleGenerator {
     pub metadata: subxt_metadata::Metadata,
     /// currently not used. Will be used later to inform how the subxt macro is generated.
     /// Can also be used used later to make for an async constructor that fetches the metadata from this location.
-    _file_or_url: FileOrUrl,
+    file_or_url: FileOrUrl,
 }
 
 impl ExampleGenerator {
-    /// Creates an `ExampleGenerator` configures for polkadot. Expects a "./polkadot.scale" file with metadata to be present.
-    pub fn polkadot() -> Self {
-        let polkadot_scale_path = "polkadot.scale";
-        let bytes = std::fs::read(polkadot_scale_path).expect("works");
-        let mut metadata = Metadata::decode(&mut &bytes[..]).expect("works");
+    /// Constructs an [ExampleGenerator] from a file path that leads to some scale encoded metadata.
+    pub fn from_file(path: &str) -> anyhow::Result<Self> {
+        let bytes = std::fs::read(path)?;
+        let mut metadata = Metadata::decode(&mut &bytes[..])?;
         RuntimeGenerator::ensure_unique_type_paths(&mut metadata);
-        Self {
+        Ok(Self {
             metadata,
-            _file_or_url: FileOrUrl::File(polkadot_scale_path.into()),
-        }
+            file_or_url: FileOrUrl::File(path.into()),
+        })
     }
 
     /// Creates code that contains with example code for all calls, cosntants and storage entries.
@@ -106,17 +105,28 @@ impl ExampleGenerator {
             }
         }
 
+        let mut custom_value_examples: Vec<TokenStream> = vec![];
+        for custom_value in self.metadata.custom().iter() {
+            let example = self
+                .custom_value_example(custom_value.name())
+                .unwrap_or_default();
+            // Note: unwrap_or_default here just to be cautious: if a custom value has a key of "12", we cannot generate example code for it. That is okay. Some custom values can have weird keys and are skipped in codegen.
+            custom_value_examples.push(example);
+        }
+
         // we provide an empty main function, because `trybuild` attempts to run it. But we don't want to run code, just check that it compiles.
         let code = wrap_with_imports(
             quote!(
                 #(#call_examples)*
                 #(#storage_examples)*
                 #(#constant_examples)*
+                #(#custom_value_examples)*
             ),
             "wrapper",
             quote!(
                 pub fn main() {}
             ),
+            &self.file_or_url,
         );
 
         Ok(code)
@@ -135,6 +145,7 @@ impl ExampleGenerator {
             ),
             "main",
             quote!(),
+            &self.file_or_url,
         );
 
         Ok(code)
@@ -145,10 +156,10 @@ impl ExampleGenerator {
         let pallet = self
             .metadata
             .pallet_by_name(pallet_name)
-            .expect("should be there");
-        let call = pallet
-            .call_variant_by_name(call_name)
-            .expect("should be there");
+            .ok_or(anyhow!("pallet {pallet_name} not found."))?;
+        let call = pallet.call_variant_by_name(call_name).ok_or(anyhow!(
+            "call {call_name} in pallet {pallet_name} not found."
+        ))?;
         // defines: let payload = ...
         let payload_code = self.call_example_payload(&type_gen, &pallet, call)?;
         let code = quote!(
@@ -189,31 +200,9 @@ impl ExampleGenerator {
         let (field_names, field_declarations) =
             variable_names_and_declarations(type_gen, variable_iter)?;
 
-        let mut field_names: Vec<Ident> = vec![];
-        let mut field_declarations: Vec<TokenStream> = vec![];
-
-        for field in &call.fields {
-            let field_name = field
-                .name
-                .as_ref()
-                .ok_or(anyhow!("only named fields should make up a call"))?;
-            let field_name = format_ident!("{field_name}");
-            field_names.push(field_name.clone());
-
-            // todo!("shorten the path, we do not want ::std::vec::Vec<::core::primitive::u8> in examples, Vec<u8> is good enough")
-            let field_type_path =
-                type_gen.resolve_field_type_path(field.ty.id, &[], field.type_name.as_deref());
-
-            let field_type_example = type_example(type_gen, field.ty.id, CompactMode::Attr)?;
-
-            // put it together as a variable declaration
-            let declaration = quote!(let #field_name : #field_type_path = #field_type_example;);
-            field_declarations.push(declaration);
-        }
-
         let code = quote!(
             #(#field_declarations);*
-            let payload = polkadot::tx().#pallet_name().#call_name( #(#field_names),*);
+            let payload = runtime::tx().#pallet_name().#call_name( #(#field_names),*);
         );
         Ok(code)
     }
@@ -230,6 +219,7 @@ impl ExampleGenerator {
             ),
             "main",
             quote!(#[tokio::main]),
+            &self.file_or_url,
         );
         Ok(code)
     }
@@ -243,12 +233,14 @@ impl ExampleGenerator {
         let pallet = self
             .metadata
             .pallet_by_name(pallet_name)
-            .expect("should be there");
+            .ok_or_else(|| anyhow!("pallet {pallet_name} not found."))?;
         let entry = pallet
             .storage()
             .expect("should be there")
             .entry_by_name(storage_item)
-            .expect("should be there");
+            .ok_or_else(|| {
+                anyhow!("storage_entry {storage_item} in pallet {pallet_name} not found.")
+            })?;
 
         let storage_query_code = self.storage_example_query(&type_gen, &pallet, entry)?;
 
@@ -292,7 +284,7 @@ impl ExampleGenerator {
 
         let code = quote!(
             #(#variable_declarations);*
-            let storage_query = polkadot::storage().#pallet_name().#entry_name( #(#variable_names),*);
+            let storage_query = runtime::storage().#pallet_name().#entry_name( #(#variable_names),*);
         );
         Ok(code)
     }
@@ -309,6 +301,7 @@ impl ExampleGenerator {
             ),
             "main",
             quote!(#[tokio::main]),
+            &self.file_or_url,
         );
         Ok(code)
     }
@@ -322,19 +315,54 @@ impl ExampleGenerator {
         let pallet = self
             .metadata
             .pallet_by_name(pallet_name)
-            .expect("should be there");
-        let constant = pallet
-            .constant_by_name(constant_name)
-            .expect("should be there");
+            .ok_or_else(|| anyhow!("pallet {pallet_name} not found."))?;
+        let constant = pallet.constant_by_name(constant_name).ok_or_else(|| {
+            anyhow!("constant {constant_name} in pallet {pallet_name} not found.")
+        })?;
         let constant_type_path = type_gen.resolve_type_path(constant.ty());
 
         let pallet_name = format_ident!("{}", pallet.name().to_snake_case());
         let constant_name = format_ident!("{}", constant.name().to_snake_case());
 
         let code = quote!(
-            let constant_query = polkadot::constants().#pallet_name().#constant_name();
+            let constant_query = runtime::constants().#pallet_name().#constant_name();
             let api = OnlineClient::<PolkadotConfig>::new().await?;
             let value : #constant_type_path = api.constants().at(&constant_query)?;
+        );
+
+        Ok(code)
+    }
+
+    /// create an executable example (with ) with the specified call
+    pub fn custom_value_example_wrapped(&self, name: &str) -> anyhow::Result<TokenStream> {
+        let custom_value_example = self.custom_value_example(name)?;
+        let code = wrap_with_imports(
+            quote!(
+                #custom_value_example
+            ),
+            "main",
+            quote!(),
+            &self.file_or_url,
+        );
+
+        Ok(code)
+    }
+
+    fn custom_value_example(&self, name: &str) -> anyhow::Result<TokenStream> {
+        let type_gen = self.new_type_gen();
+        let custom_metadata = self.metadata.custom();
+        let custom_value = custom_metadata
+            .get(name)
+            .ok_or_else(|| anyhow!("custom value {name} not found."))?;
+        let snake_case_name = custom_value.name().to_snake_case();
+        let name = syn::parse_str::<syn::Ident>(&snake_case_name)?;
+
+        let custom_value_type = type_gen.resolve_type_path(custom_value.type_id());
+
+        let code = quote!(
+            let value_address = runtime::custom().#name();
+            let api = OnlineClient::<PolkadotConfig>::new().await?;
+            let custom_value : #custom_value_type = api.custom_values().at(&value_address)?;
         );
 
         Ok(code)
@@ -367,12 +395,22 @@ fn wrap_with_imports(
     inner: impl ToTokens,
     wrapper_fn_name: &str,
     code_before_wrapper: impl ToTokens,
+    file_or_url: &FileOrUrl,
 ) -> TokenStream {
+    let attr_macro = match file_or_url {
+        FileOrUrl::File(path) => {
+            quote!(#[subxt::subxt(runtime_metadata_path = #path)])
+        }
+        FileOrUrl::Url(url) => {
+            quote!(#[subxt::subxt(runtime_metadata_url = #url)])
+        }
+    };
+
     let wrapper_fn_ident = format_ident!("{}", wrapper_fn_name);
     quote!(
-        #[subxt::subxt(runtime_metadata_path = "polkadot.scale")]
-        pub mod polkadot {}
-        use polkadot::runtime_types;
+        #attr_macro
+        pub mod runtime {}
+        use runtime::runtime_types;
 
         use subxt::{OnlineClient, PolkadotConfig};
         use subxt_signer::sr25519::dev;
