@@ -1,7 +1,13 @@
 use std::{env::args, fs};
 
-use subxt::utils::bits::DecodedBits;
-use subxt_example_codegen::ExampleGenerator;
+use subxt::{
+    ext::{
+        scale_bits,
+        scale_value::{self, value, BitSequence},
+    },
+    OnlineClient, PolkadotConfig,
+};
+use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
 
 /// Make sure you have a `polkadot.scale` file at the root of this project.
 ///
@@ -13,7 +19,8 @@ use subxt_example_codegen::ExampleGenerator;
 /// The directory `./alternative_metadata` contains different metadata files that can quickly replace the `./polkadot.scale` to see if codegen still works.
 fn main() -> anyhow::Result<()> {
     let metadata_file = "polkadot.scale";
-    let example_gen = ExampleGenerator::from_file(metadata_file)?;
+    let example_context = ExampleContext::from_file(metadata_file, true);
+    let example_gen = ExampleGenerator::from_context(example_context)?;
     let tokens = example_gen.all_examples_wrapped()?;
 
     // you can also try something like this instead:

@@ -1,276 +1,15 @@
-#[subxt::subxt(runtime_metadata_path = "polkadot.scale")]
-pub mod runtime {}
-use runtime::runtime_types;
+#![recursion_limit = "256"]
+use subxt::ext::scale_bits::bits;
+use subxt::ext::scale_value::{value, Value};
+use subxt::dynamic::DecodedValueThunk;
 use subxt::{OnlineClient, PolkadotConfig};
 use subxt_signer::sr25519::dev;
 pub fn main() {}
 async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
-    let remark: ::std::vec::Vec<::core::primitive::u8> = vec![8, 8];
-    let payload = runtime::tx().system().remark(remark);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let pages: ::core::primitive::u64 = 64;
-    let payload = runtime::tx().system().set_heap_pages(pages);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let code: ::std::vec::Vec<::core::primitive::u8> = vec![8, 8];
-    let payload = runtime::tx().system().set_code(code);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let code: ::std::vec::Vec<::core::primitive::u8> = vec![8, 8];
-    let payload = runtime::tx().system().set_code_without_checks(code);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let items: ::std::vec::Vec<
-        (::std::vec::Vec<::core::primitive::u8>, ::std::vec::Vec<::core::primitive::u8>),
-    > = vec![(vec![8, 8], vec![8, 8]), (vec![8, 8], vec![8, 8])];
-    let payload = runtime::tx().system().set_storage(items);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let keys: ::std::vec::Vec<::std::vec::Vec<::core::primitive::u8>> = vec![
-        vec![8, 8], vec![8, 8]
-    ];
-    let payload = runtime::tx().system().kill_storage(keys);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let prefix: ::std::vec::Vec<::core::primitive::u8> = vec![8, 8];
-    let subkeys: ::core::primitive::u32 = 32;
-    let payload = runtime::tx().system().kill_prefix(prefix, subkeys);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let remark: ::std::vec::Vec<::core::primitive::u8> = vec![8, 8];
-    let payload = runtime::tx().system().remark_with_event(remark);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let now: ::core::primitive::u64 = 64;
-    let payload = runtime::tx().timestamp().set(now);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let value: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().balances().transfer_allow_death(dest, value);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let new_free: ::core::primitive::u128 = 128;
-    let old_reserved: ::core::primitive::u128 = 128;
-    let payload = runtime::tx()
-        .balances()
-        .set_balance_deprecated(who, new_free, old_reserved);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let source: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let value: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().balances().force_transfer(source, dest, value);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let value: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().balances().transfer_keep_alive(dest, value);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let keep_alive: ::core::primitive::bool = false;
-    let payload = runtime::tx().balances().transfer_all(dest, keep_alive);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let amount: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().balances().force_unreserve(who, amount);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let who: ::std::vec::Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],)
-    ];
-    let payload = runtime::tx().balances().upgrade_accounts(who);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let value: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().balances().transfer(dest, value);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
-    );
-    let new_free: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().balances().force_set_balance(who, new_free);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let value: ::core::primitive::u128 = 128;
-    let payee: runtime_types::pallet_staking::RewardDestination<
-        ::subxt::utils::AccountId32,
-    > = runtime_types::pallet_staking::RewardDestination::Staked;
-    let payload = runtime::tx().staking().bond(value, payee);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let max_additional: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().staking().bond_extra(max_additional);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let value: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().staking().unbond(value);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let num_slashing_spans: ::core::primitive::u32 = 32;
-    let payload = runtime::tx().staking().withdraw_unbonded(num_slashing_spans);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let prefs: runtime_types::pallet_staking::ValidatorPrefs = runtime_types::pallet_staking::ValidatorPrefs {
-        commission: runtime_types::sp_arithmetic::per_things::Perbill(32),
-        blocked: false,
+    let remark: Value = value! {
+        (8, 8, 8)
     };
-    let payload = runtime::tx().staking().validate(prefs);
+    let payload = subxt::tx::dynamic("System", "remark", vec![remark]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let from = dev::alice();
     let events = api
@@ -279,296 +18,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let targets: ::std::vec::Vec<
-        ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-    > = vec![
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),),
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),)
-    ];
-    let payload = runtime::tx().staking().nominate(targets);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let payload = runtime::tx().staking().chill();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let payee: runtime_types::pallet_staking::RewardDestination<
-        ::subxt::utils::AccountId32,
-    > = runtime_types::pallet_staking::RewardDestination::Staked;
-    let payload = runtime::tx().staking().set_payee(payee);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let payload = runtime::tx().staking().set_controller();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let new: ::core::primitive::u32 = 32;
-    let payload = runtime::tx().staking().set_validator_count(new);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let additional: ::core::primitive::u32 = 32;
-    let payload = runtime::tx().staking().increase_validator_count(additional);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let factor: runtime_types::sp_arithmetic::per_things::Percent = runtime_types::sp_arithmetic::per_things::Percent(
-        8,
-    );
-    let payload = runtime::tx().staking().scale_validator_count(factor);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let payload = runtime::tx().staking().force_no_eras();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let payload = runtime::tx().staking().force_new_era();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let invulnerables: ::std::vec::Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],)
-    ];
-    let payload = runtime::tx().staking().set_invulnerables(invulnerables);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let num_slashing_spans: ::core::primitive::u32 = 32;
-    let payload = runtime::tx().staking().force_unstake(stash, num_slashing_spans);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let payload = runtime::tx().staking().force_new_era_always();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let era: ::core::primitive::u32 = 32;
-    let slash_indices: ::std::vec::Vec<::core::primitive::u32> = vec![32, 32];
-    let payload = runtime::tx().staking().cancel_deferred_slash(era, slash_indices);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let validator_stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32(
-        [8; 32usize],
-    );
-    let era: ::core::primitive::u32 = 32;
-    let payload = runtime::tx().staking().payout_stakers(validator_stash, era);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let value: ::core::primitive::u128 = 128;
-    let payload = runtime::tx().staking().rebond(value);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let num_slashing_spans: ::core::primitive::u32 = 32;
-    let payload = runtime::tx().staking().reap_stash(stash, num_slashing_spans);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let who: ::std::vec::Vec<
-        ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
-    > = vec![
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),),
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),)
-    ];
-    let payload = runtime::tx().staking().kick(who);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let min_nominator_bond: runtime_types::pallet_staking::pallet::pallet::ConfigOp<
-        ::core::primitive::u128,
-    > = runtime_types::pallet_staking::pallet::pallet::ConfigOp::Noop;
-    let min_validator_bond: runtime_types::pallet_staking::pallet::pallet::ConfigOp<
-        ::core::primitive::u128,
-    > = runtime_types::pallet_staking::pallet::pallet::ConfigOp::Noop;
-    let max_nominator_count: runtime_types::pallet_staking::pallet::pallet::ConfigOp<
-        ::core::primitive::u32,
-    > = runtime_types::pallet_staking::pallet::pallet::ConfigOp::Noop;
-    let max_validator_count: runtime_types::pallet_staking::pallet::pallet::ConfigOp<
-        ::core::primitive::u32,
-    > = runtime_types::pallet_staking::pallet::pallet::ConfigOp::Noop;
-    let chill_threshold: runtime_types::pallet_staking::pallet::pallet::ConfigOp<
-        runtime_types::sp_arithmetic::per_things::Percent,
-    > = runtime_types::pallet_staking::pallet::pallet::ConfigOp::Noop;
-    let min_commission: runtime_types::pallet_staking::pallet::pallet::ConfigOp<
-        runtime_types::sp_arithmetic::per_things::Perbill,
-    > = runtime_types::pallet_staking::pallet::pallet::ConfigOp::Noop;
-    let payload = runtime::tx()
-        .staking()
-        .set_staking_configs(
-            min_nominator_bond,
-            min_validator_bond,
-            max_nominator_count,
-            max_validator_count,
-            chill_threshold,
-            min_commission,
-        );
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let controller: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32(
-        [8; 32usize],
-    );
-    let payload = runtime::tx().staking().chill_other(controller);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let validator_stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32(
-        [8; 32usize],
-    );
-    let payload = runtime::tx().staking().force_apply_min_commission(validator_stash);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let new: runtime_types::sp_arithmetic::per_things::Perbill = runtime_types::sp_arithmetic::per_things::Perbill(
-        32,
-    );
-    let payload = runtime::tx().staking().set_min_commission(new);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let other_signatories: ::std::vec::Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],)
-    ];
-    let call: ::core::primitive::bool = false;
-    let payload = runtime::tx().multisig().as_multi_threshold_1(other_signatories, call);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let from = dev::alice();
-    let events = api
-        .tx()
-        .sign_and_submit_then_watch_default(&payload, &from)
-        .await?
-        .wait_for_finalized_success()
-        .await?;
-    let threshold: ::core::primitive::u16 = 16;
-    let other_signatories: ::std::vec::Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],)
-    ];
-    let maybe_timepoint: ::core::option::Option<
-        runtime_types::pallet_multisig::Timepoint<::core::primitive::u32>,
-    > = ::core::option::Option::None;
-    let call: ::core::primitive::bool = false;
-    let max_weight: runtime_types::sp_weights::weight_v2::Weight = runtime_types::sp_weights::weight_v2::Weight {
-        ref_time: 64,
-        proof_size: 64,
+    let pages: Value = value! {
+        64
     };
-    let payload = runtime::tx()
-        .multisig()
-        .as_multi(threshold, other_signatories, maybe_timepoint, call, max_weight);
+    let payload = subxt::tx::dynamic("System", "set_heap_pages", vec![pages]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let from = dev::alice();
     let events = api
@@ -577,28 +30,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let threshold: ::core::primitive::u16 = 16;
-    let other_signatories: ::std::vec::Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],)
-    ];
-    let maybe_timepoint: ::core::option::Option<
-        runtime_types::pallet_multisig::Timepoint<::core::primitive::u32>,
-    > = ::core::option::Option::None;
-    let call_hash: [::core::primitive::u8; 32usize] = [8; 32usize];
-    let max_weight: runtime_types::sp_weights::weight_v2::Weight = runtime_types::sp_weights::weight_v2::Weight {
-        ref_time: 64,
-        proof_size: 64,
+    let code: Value = value! {
+        (8, 8, 8)
     };
-    let payload = runtime::tx()
-        .multisig()
-        .approve_as_multi(
-            threshold,
-            other_signatories,
-            maybe_timepoint,
-            call_hash,
-            max_weight,
-        );
+    let payload = subxt::tx::dynamic("System", "set_code", vec![code]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let from = dev::alice();
     let events = api
@@ -607,19 +42,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let threshold: ::core::primitive::u16 = 16;
-    let other_signatories: ::std::vec::Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],)
-    ];
-    let timepoint: runtime_types::pallet_multisig::Timepoint<::core::primitive::u32> = runtime_types::pallet_multisig::Timepoint {
-        height: 32,
-        index: 32,
+    let code: Value = value! {
+        (8, 8, 8)
     };
-    let call_hash: [::core::primitive::u8; 32usize] = [8; 32usize];
-    let payload = runtime::tx()
-        .multisig()
-        .cancel_as_multi(threshold, other_signatories, timepoint, call_hash);
+    let payload = subxt::tx::dynamic("System", "set_code_without_checks", vec![code]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let from = dev::alice();
     let events = api
@@ -628,133 +54,573 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let data: runtime_types::polkadot_primitives::v5::InherentData<
-        runtime_types::sp_runtime::generic::header::Header<
-            ::core::primitive::u32,
-            runtime_types::sp_runtime::traits::BlakeTwo256,
-        >,
-    > = runtime_types::polkadot_primitives::v5::InherentData {
-        bitfields: vec![
-            runtime_types::polkadot_primitives::v5::signed::UncheckedSigned { payload :
-            runtime_types::polkadot_primitives::v5::AvailabilityBitfield(subxt::utils::bits::DecodedBits::from_iter([true,
-            false, false]),), validator_index :
-            runtime_types::polkadot_primitives::v5::ValidatorIndex(32,), signature :
-            runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),), __subxt_unused_type_params : ::core::marker::PhantomData },
-            runtime_types::polkadot_primitives::v5::signed::UncheckedSigned { payload :
-            runtime_types::polkadot_primitives::v5::AvailabilityBitfield(subxt::utils::bits::DecodedBits::from_iter([true,
-            false, false]),), validator_index :
-            runtime_types::polkadot_primitives::v5::ValidatorIndex(32,), signature :
-            runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),), __subxt_unused_type_params : ::core::marker::PhantomData }
+    let items: Value = value! {
+        (((8, 8, 8), (8, 8, 8)), ((8, 8, 8), (8, 8, 8)), ((8, 8, 8), (8, 8, 8)))
+    };
+    let payload = subxt::tx::dynamic("System", "set_storage", vec![items]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let keys: Value = value! {
+        ((8, 8, 8), (8, 8, 8), (8, 8, 8))
+    };
+    let payload = subxt::tx::dynamic("System", "kill_storage", vec![keys]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let prefix: Value = value! {
+        (8, 8, 8)
+    };
+    let subkeys: Value = value! {
+        32
+    };
+    let payload = subxt::tx::dynamic("System", "kill_prefix", vec![prefix, subkeys]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let remark: Value = value! {
+        (8, 8, 8)
+    };
+    let payload = subxt::tx::dynamic("System", "remark_with_event", vec![remark]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let now: Value = value! {
+        64
+    };
+    let payload = subxt::tx::dynamic("Timestamp", "set", vec![now]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let dest: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let value: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic(
+        "Balances",
+        "transfer_allow_death",
+        vec![dest, value],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let who: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let new_free: Value = value! {
+        128
+    };
+    let old_reserved: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic(
+        "Balances",
+        "set_balance_deprecated",
+        vec![who, new_free, old_reserved],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let source: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let dest: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let value: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic(
+        "Balances",
+        "force_transfer",
+        vec![source, dest, value],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let dest: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let value: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic(
+        "Balances",
+        "transfer_keep_alive",
+        vec![dest, value],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let dest: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let keep_alive: Value = value! {
+        true
+    };
+    let payload = subxt::tx::dynamic("Balances", "transfer_all", vec![dest, keep_alive]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let who: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let amount: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic("Balances", "force_unreserve", vec![who, amount]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let who: Value = value! {
+        (((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)))
+    };
+    let payload = subxt::tx::dynamic("Balances", "upgrade_accounts", vec![who]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let dest: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let value: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic("Balances", "transfer", vec![dest, value]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let who: Value = value! {
+        Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8)))
+    };
+    let new_free: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic(
+        "Balances",
+        "force_set_balance",
+        vec![who, new_free],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let value: Value = value! {
+        128
+    };
+    let payee: Value = value! {
+        Staked()
+    };
+    let payload = subxt::tx::dynamic("Staking", "bond", vec![value, payee]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let max_additional: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic("Staking", "bond_extra", vec![max_additional]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let value: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic("Staking", "unbond", vec![value]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let num_slashing_spans: Value = value! {
+        32
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "withdraw_unbonded",
+        vec![num_slashing_spans],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let prefs: Value = value! {
+        { commission : (32), blocked : true }
+    };
+    let payload = subxt::tx::dynamic("Staking", "validate", vec![prefs]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let targets: Value = value! {
+        (Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8))), Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8))), Id(((8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8))))
+    };
+    let payload = subxt::tx::dynamic("Staking", "nominate", vec![targets]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let payload = subxt::tx::dynamic("Staking", "chill", Vec::<Value>::new());
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let payee: Value = value! {
+        Staked()
+    };
+    let payload = subxt::tx::dynamic("Staking", "set_payee", vec![payee]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let payload = subxt::tx::dynamic("Staking", "set_controller", Vec::<Value>::new());
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let new: Value = value! {
+        32
+    };
+    let payload = subxt::tx::dynamic("Staking", "set_validator_count", vec![new]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let additional: Value = value! {
+        32
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "increase_validator_count",
+        vec![additional],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let factor: Value = value! {
+        (8)
+    };
+    let payload = subxt::tx::dynamic("Staking", "scale_validator_count", vec![factor]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let payload = subxt::tx::dynamic("Staking", "force_no_eras", Vec::<Value>::new());
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let payload = subxt::tx::dynamic("Staking", "force_new_era", Vec::<Value>::new());
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let invulnerables: Value = value! {
+        (((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)))
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "set_invulnerables",
+        vec![invulnerables],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let stash: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let num_slashing_spans: Value = value! {
+        32
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "force_unstake",
+        vec![stash, num_slashing_spans],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "force_new_era_always",
+        Vec::<Value>::new(),
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let era: Value = value! {
+        32
+    };
+    let slash_indices: Value = value! {
+        (32, 32, 32)
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "cancel_deferred_slash",
+        vec![era, slash_indices],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let validator_stash: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let era: Value = value! {
+        32
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "payout_stakers",
+        vec![validator_stash, era],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let value: Value = value! {
+        128
+    };
+    let payload = subxt::tx::dynamic("Staking", "rebond", vec![value]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let stash: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let num_slashing_spans: Value = value! {
+        32
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "reap_stash",
+        vec![stash, num_slashing_spans],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let who: Value = value! {
+        (Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8))), Id(((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8))), Id(((8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8))))
+    };
+    let payload = subxt::tx::dynamic("Staking", "kick", vec![who]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let min_nominator_bond: Value = value! {
+        Noop()
+    };
+    let min_validator_bond: Value = value! {
+        Noop()
+    };
+    let max_nominator_count: Value = value! {
+        Noop()
+    };
+    let max_validator_count: Value = value! {
+        Noop()
+    };
+    let chill_threshold: Value = value! {
+        Noop()
+    };
+    let min_commission: Value = value! {
+        Noop()
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "set_staking_configs",
+        vec![
+            min_nominator_bond, min_validator_bond, max_nominator_count,
+            max_validator_count, chill_threshold, min_commission
         ],
-        backed_candidates: vec![
-            runtime_types::polkadot_primitives::v5::BackedCandidate { candidate :
-            runtime_types::polkadot_primitives::v5::CommittedCandidateReceipt {
-            descriptor : runtime_types::polkadot_primitives::v5::CandidateDescriptor {
-            para_id : runtime_types::polkadot_parachain::primitives::Id(32,),
-            relay_parent : ::subxt::utils::H256([8; 32usize],), collator :
-            runtime_types::polkadot_primitives::v5::collator_app::Public(runtime_types::sp_core::sr25519::Public([8;
-            32usize],),), persisted_validation_data_hash : ::subxt::utils::H256([8;
-            32usize],), pov_hash : ::subxt::utils::H256([8; 32usize],), erasure_root :
-            ::subxt::utils::H256([8; 32usize],), signature :
-            runtime_types::polkadot_primitives::v5::collator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),), para_head : ::subxt::utils::H256([8; 32usize],),
-            validation_code_hash :
-            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(::subxt::utils::H256([8;
-            32usize],),), }, commitments :
-            runtime_types::polkadot_primitives::v5::CandidateCommitments {
-            upward_messages :
-            runtime_types::bounded_collections::bounded_vec::BoundedVec(vec![vec![8, 8],
-            vec![8, 8]],), horizontal_messages :
-            runtime_types::bounded_collections::bounded_vec::BoundedVec(vec![runtime_types::polkadot_core_primitives::OutboundHrmpMessage
-            { recipient : runtime_types::polkadot_parachain::primitives::Id(32,), data :
-            vec![8, 8], }, runtime_types::polkadot_core_primitives::OutboundHrmpMessage {
-            recipient : runtime_types::polkadot_parachain::primitives::Id(32,), data :
-            vec![8, 8], }],), new_validation_code : ::core::option::Option::None,
-            head_data : runtime_types::polkadot_parachain::primitives::HeadData(vec![8,
-            8],), processed_downward_messages : 32, hrmp_watermark : 32, }, },
-            validity_votes :
-            vec![runtime_types::polkadot_primitives::v5::ValidityAttestation::Implicit(runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),),),
-            runtime_types::polkadot_primitives::v5::ValidityAttestation::Implicit(runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),),)], validator_indices :
-            subxt::utils::bits::DecodedBits::from_iter([true, false, false]), },
-            runtime_types::polkadot_primitives::v5::BackedCandidate { candidate :
-            runtime_types::polkadot_primitives::v5::CommittedCandidateReceipt {
-            descriptor : runtime_types::polkadot_primitives::v5::CandidateDescriptor {
-            para_id : runtime_types::polkadot_parachain::primitives::Id(32,),
-            relay_parent : ::subxt::utils::H256([8; 32usize],), collator :
-            runtime_types::polkadot_primitives::v5::collator_app::Public(runtime_types::sp_core::sr25519::Public([8;
-            32usize],),), persisted_validation_data_hash : ::subxt::utils::H256([8;
-            32usize],), pov_hash : ::subxt::utils::H256([8; 32usize],), erasure_root :
-            ::subxt::utils::H256([8; 32usize],), signature :
-            runtime_types::polkadot_primitives::v5::collator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),), para_head : ::subxt::utils::H256([8; 32usize],),
-            validation_code_hash :
-            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(::subxt::utils::H256([8;
-            32usize],),), }, commitments :
-            runtime_types::polkadot_primitives::v5::CandidateCommitments {
-            upward_messages :
-            runtime_types::bounded_collections::bounded_vec::BoundedVec(vec![vec![8, 8],
-            vec![8, 8]],), horizontal_messages :
-            runtime_types::bounded_collections::bounded_vec::BoundedVec(vec![runtime_types::polkadot_core_primitives::OutboundHrmpMessage
-            { recipient : runtime_types::polkadot_parachain::primitives::Id(32,), data :
-            vec![8, 8], }, runtime_types::polkadot_core_primitives::OutboundHrmpMessage {
-            recipient : runtime_types::polkadot_parachain::primitives::Id(32,), data :
-            vec![8, 8], }],), new_validation_code : ::core::option::Option::None,
-            head_data : runtime_types::polkadot_parachain::primitives::HeadData(vec![8,
-            8],), processed_downward_messages : 32, hrmp_watermark : 32, }, },
-            validity_votes :
-            vec![runtime_types::polkadot_primitives::v5::ValidityAttestation::Implicit(runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),),),
-            runtime_types::polkadot_primitives::v5::ValidityAttestation::Implicit(runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),),)], validator_indices :
-            subxt::utils::bits::DecodedBits::from_iter([true, false, false]), }
-        ],
-        disputes: vec![
-            runtime_types::polkadot_primitives::v5::DisputeStatementSet { candidate_hash
-            :
-            runtime_types::polkadot_core_primitives::CandidateHash(::subxt::utils::H256([8;
-            32usize],),), session : 32, statements :
-            vec![(runtime_types::polkadot_primitives::v5::DisputeStatement::Valid(runtime_types::polkadot_primitives::v5::ValidDisputeStatementKind::Explicit,),
-            runtime_types::polkadot_primitives::v5::ValidatorIndex(32,),
-            runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),)),
-            (runtime_types::polkadot_primitives::v5::DisputeStatement::Valid(runtime_types::polkadot_primitives::v5::ValidDisputeStatementKind::Explicit,),
-            runtime_types::polkadot_primitives::v5::ValidatorIndex(32,),
-            runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),))], },
-            runtime_types::polkadot_primitives::v5::DisputeStatementSet { candidate_hash
-            :
-            runtime_types::polkadot_core_primitives::CandidateHash(::subxt::utils::H256([8;
-            32usize],),), session : 32, statements :
-            vec![(runtime_types::polkadot_primitives::v5::DisputeStatement::Valid(runtime_types::polkadot_primitives::v5::ValidDisputeStatementKind::Explicit,),
-            runtime_types::polkadot_primitives::v5::ValidatorIndex(32,),
-            runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),)),
-            (runtime_types::polkadot_primitives::v5::DisputeStatement::Valid(runtime_types::polkadot_primitives::v5::ValidDisputeStatementKind::Explicit,),
-            runtime_types::polkadot_primitives::v5::ValidatorIndex(32,),
-            runtime_types::polkadot_primitives::v5::validator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),))], }
-        ],
-        parent_header: runtime_types::sp_runtime::generic::header::Header {
-            parent_hash: ::subxt::utils::H256([8; 32usize]),
-            number: 32,
-            state_root: ::subxt::utils::H256([8; 32usize]),
-            extrinsics_root: ::subxt::utils::H256([8; 32usize]),
-            digest: runtime_types::sp_runtime::generic::digest::Digest {
-                logs: vec![
-                    runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
-                    4usize], vec![8, 8],),
-                    runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
-                    4usize], vec![8, 8],)
-                ],
-            },
-            __subxt_unused_type_params: ::core::marker::PhantomData,
-        },
-    };
-    let payload = runtime::tx().para_inherent().enter(data);
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let from = dev::alice();
     let events = api
@@ -763,618 +629,1069 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().system().account(key_0);
+    let controller: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let payload = subxt::tx::dynamic("Staking", "chill_other", vec![controller]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::frame_system::AccountInfo<
-            ::core::primitive::u32,
-            runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().system().extrinsic_count();
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let validator_stash: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let payload = subxt::tx::dynamic(
+        "Staking",
+        "force_apply_min_commission",
+        vec![validator_stash],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let new: Value = value! {
+        (32)
+    };
+    let payload = subxt::tx::dynamic("Staking", "set_min_commission", vec![new]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let other_signatories: Value = value! {
+        (((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)))
+    };
+    let call: Value = value! {
+        true
+    };
+    let payload = subxt::tx::dynamic(
+        "Multisig",
+        "as_multi_threshold_1",
+        vec![other_signatories, call],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let threshold: Value = value! {
+        16
+    };
+    let other_signatories: Value = value! {
+        (((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)))
+    };
+    let maybe_timepoint: Value = value! {
+        None()
+    };
+    let call: Value = value! {
+        true
+    };
+    let max_weight: Value = value! {
+        { ref_time : 64, proof_size : 64 }
+    };
+    let payload = subxt::tx::dynamic(
+        "Multisig",
+        "as_multi",
+        vec![threshold, other_signatories, maybe_timepoint, call, max_weight],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let threshold: Value = value! {
+        16
+    };
+    let other_signatories: Value = value! {
+        (((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)))
+    };
+    let maybe_timepoint: Value = value! {
+        None()
+    };
+    let call_hash: Value = value! {
+        (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8)
+    };
+    let max_weight: Value = value! {
+        { ref_time : 64, proof_size : 64 }
+    };
+    let payload = subxt::tx::dynamic(
+        "Multisig",
+        "approve_as_multi",
+        vec![threshold, other_signatories, maybe_timepoint, call_hash, max_weight],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let threshold: Value = value! {
+        16
+    };
+    let other_signatories: Value = value! {
+        (((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)), ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)))
+    };
+    let timepoint: Value = value! {
+        { height : 32, index : 32 }
+    };
+    let call_hash: Value = value! {
+        (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8)
+    };
+    let payload = subxt::tx::dynamic(
+        "Multisig",
+        "cancel_as_multi",
+        vec![threshold, other_signatories, timepoint, call_hash],
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let data: Value = todo!(
+        "Value string is very long and will likely exceed recursion limit."
+    );
+    let payload = subxt::tx::dynamic("ParaInherent", "enter", vec![data]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let from = dev::alice();
+    let events = api
+        .tx()
+        .sign_and_submit_then_watch_default(&payload, &from)
+        .await?
+        .wait_for_finalized_success()
+        .await?;
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("System", "Account", vec![key_0]);
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().block_weight();
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "ExtrinsicCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::frame_support::dispatch::PerDispatchClass<
-            runtime_types::sp_weights::weight_v2::Weight,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().system().all_extrinsics_len();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().system().block_hash(key_0);
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "BlockWeight",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::subxt::utils::H256> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().system().extrinsic_data(key_0);
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "AllExtrinsicsLen",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::std::vec::Vec<::core::primitive::u8>> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().number();
+    let key_0: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic("System", "BlockHash", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().parent_hash();
+    let key_0: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic("System", "ExtrinsicData", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::subxt::utils::H256> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().digest();
+    let storage_query = subxt::storage::dynamic("System", "Number", Vec::<Value>::new());
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::sp_runtime::generic::digest::Digest> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().events();
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "ParentHash",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        ::std::vec::Vec<
-            runtime_types::frame_system::EventRecord<
-                runtime_types::polkadot_runtime::RuntimeEvent,
-                ::subxt::utils::H256,
-            >,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().system().event_count();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::H256 = ::subxt::utils::H256([8; 32usize]);
-    let storage_query = runtime::storage().system().event_topics(key_0);
+    let storage_query = subxt::storage::dynamic("System", "Digest", Vec::<Value>::new());
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        ::std::vec::Vec<(::core::primitive::u32, ::core::primitive::u32)>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().system().last_runtime_upgrade();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::frame_system::LastRuntimeUpgradeInfo> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().upgraded_to_u32_ref_count();
+    let storage_query = subxt::storage::dynamic("System", "Events", Vec::<Value>::new());
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::bool> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().upgraded_to_triple_ref_count();
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "EventCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::bool> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().system().execution_phase();
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("System", "EventTopics", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::frame_system::Phase> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().timestamp().now();
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "LastRuntimeUpgrade",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u64> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().timestamp().did_update();
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "UpgradedToU32RefCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::bool> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().balances().total_issuance();
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "UpgradedToTripleRefCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().balances().inactive_issuance();
+    let storage_query = subxt::storage::dynamic(
+        "System",
+        "ExecutionPhase",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().balances().account(key_0);
+    let storage_query = subxt::storage::dynamic("Timestamp", "Now", Vec::<Value>::new());
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::pallet_balances::types::AccountData<::core::primitive::u128>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().balances().locks(key_0);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::bounded_collections::weak_bounded_vec::WeakBoundedVec<
-            runtime_types::pallet_balances::types::BalanceLock<::core::primitive::u128>,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().balances().reserves(key_0);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::bounded_collections::bounded_vec::BoundedVec<
-            runtime_types::pallet_balances::types::ReserveData<
-                [::core::primitive::u8; 8usize],
-                ::core::primitive::u128,
-            >,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().balances().holds(key_0);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::bounded_collections::bounded_vec::BoundedVec<
-            runtime_types::pallet_balances::types::IdAmount<
-                runtime_types::polkadot_runtime::RuntimeHoldReason,
-                ::core::primitive::u128,
-            >,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().balances().freezes(key_0);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::bounded_collections::bounded_vec::BoundedVec<
-            runtime_types::pallet_balances::types::IdAmount<(), ::core::primitive::u128>,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().staking().validator_count();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().minimum_validator_count();
+    let storage_query = subxt::storage::dynamic(
+        "Timestamp",
+        "DidUpdate",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().invulnerables();
+    let storage_query = subxt::storage::dynamic(
+        "Balances",
+        "TotalIssuance",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::std::vec::Vec<::subxt::utils::AccountId32>> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().bonded(key_0);
+    let storage_query = subxt::storage::dynamic(
+        "Balances",
+        "InactiveIssuance",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::subxt::utils::AccountId32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().min_nominator_bond();
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Balances", "Account", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().min_validator_bond();
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Balances", "Locks", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().minimum_active_stake();
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Balances", "Reserves", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().min_commission();
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Balances", "Holds", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::sp_arithmetic::per_things::Perbill> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().ledger(key_0);
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Balances", "Freezes", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::pallet_staking::StakingLedger> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().payee(key_0);
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ValidatorCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::pallet_staking::RewardDestination<::subxt::utils::AccountId32>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().validators(key_0);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::pallet_staking::ValidatorPrefs> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().counter_for_validators();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "MinimumValidatorCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().max_validators_count();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "Invulnerables",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().nominators(key_0);
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Staking", "Bonded", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::pallet_staking::Nominations> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().counter_for_nominators();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "MinNominatorBond",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().max_nominators_count();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "MinValidatorBond",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().current_era();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "MinimumActiveStake",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().active_era();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "MinCommission",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::pallet_staking::ActiveEraInfo> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().staking().eras_start_session_index(key_0);
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Staking", "Ledger", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().eras_stakers(key_0, key_1);
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Staking", "Payee", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::pallet_staking::Exposure<
-            ::subxt::utils::AccountId32,
-            ::core::primitive::u128,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().eras_stakers_clipped(key_0, key_1);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::pallet_staking::Exposure<
-            ::subxt::utils::AccountId32,
-            ::core::primitive::u128,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().eras_validator_prefs(key_0, key_1);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::pallet_staking::ValidatorPrefs> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().staking().eras_validator_reward(key_0);
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Staking", "Validators", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().staking().eras_reward_points(key_0);
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "CounterForValidators",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::pallet_staking::EraRewardPoints<::subxt::utils::AccountId32>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().staking().eras_total_stake(key_0);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().force_era();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "MaxValidatorsCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::pallet_staking::Forcing> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().slash_reward_fraction();
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Staking", "Nominators", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::sp_arithmetic::per_things::Perbill> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().canceled_slash_payout();
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "CounterForNominators",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().staking().unapplied_slashes(key_0);
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "MaxNominatorsCount",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        ::std::vec::Vec<
-            runtime_types::pallet_staking::UnappliedSlash<
-                ::subxt::utils::AccountId32,
-                ::core::primitive::u128,
-            >,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().staking().bonded_eras();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        ::std::vec::Vec<(::core::primitive::u32, ::core::primitive::u32)>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage()
-        .staking()
-        .validator_slash_in_era(key_0, key_1);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        (runtime_types::sp_arithmetic::per_things::Perbill, ::core::primitive::u128),
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::core::primitive::u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage()
-        .staking()
-        .nominator_slash_in_era(key_0, key_1);
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u128> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let storage_query = runtime::storage().staking().slashing_spans(key_0);
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "CurrentEra",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::pallet_staking::slashing::SlashingSpans> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let key_1: ::core::primitive::u32 = 32;
-    let storage_query = runtime::storage().staking().span_slash(key_0, key_1);
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ActiveEra",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::pallet_staking::slashing::SpanRecord<::core::primitive::u128>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().staking().current_planned_session();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::core::primitive::u32> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().staking().offending_validators();
+    let key_0: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ErasStartSessionIndex",
+        vec![key_0],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        ::std::vec::Vec<(::core::primitive::u32, ::core::primitive::bool)>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().staking().chill_threshold();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<runtime_types::sp_arithmetic::per_things::Percent> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
-    let key_1: [::core::primitive::u8; 32usize] = [8; 32usize];
-    let storage_query = runtime::storage().multisig().multisigs(key_0, key_1);
+    let key_0: Value = value! {
+        32
+    };
+    let key_1: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ErasStakers",
+        vec![key_0, key_1],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::pallet_multisig::Multisig<
-            ::core::primitive::u32,
-            ::core::primitive::u128,
-            ::subxt::utils::AccountId32,
-        >,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let storage_query = runtime::storage().para_inherent().included();
-    let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<()> = api
+    let result: Option<DecodedValueThunk> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let storage_query = runtime::storage().para_inherent().on_chain_votes();
+    let key_0: Value = value! {
+        32
+    };
+    let key_1: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ErasStakersClipped",
+        vec![key_0, key_1],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<
-        runtime_types::polkadot_primitives::v5::ScrapedOnChainVotes<::subxt::utils::H256>,
-    > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let constant_query = runtime::constants().system().block_weights();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        32
+    };
+    let key_1: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ErasValidatorPrefs",
+        vec![key_0, key_1],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: runtime_types::frame_system::limits::BlockWeights = api
-        .constants()
-        .at(&constant_query)?;
-    let constant_query = runtime::constants().system().block_length();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ErasValidatorReward",
+        vec![key_0],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: runtime_types::frame_system::limits::BlockLength = api
-        .constants()
-        .at(&constant_query)?;
-    let constant_query = runtime::constants().system().block_hash_count();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ErasRewardPoints",
+        vec![key_0],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().system().db_weight();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ErasTotalStake",
+        vec![key_0],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: runtime_types::sp_weights::RuntimeDbWeight = api
-        .constants()
-        .at(&constant_query)?;
-    let constant_query = runtime::constants().system().version();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ForceEra",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: runtime_types::sp_version::RuntimeVersion = api
-        .constants()
-        .at(&constant_query)?;
-    let constant_query = runtime::constants().system().ss58_prefix();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "SlashRewardFraction",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u16 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().timestamp().minimum_period();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "CanceledSlashPayout",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u64 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().balances().existential_deposit();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "UnappliedSlashes",
+        vec![key_0],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u128 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().balances().max_locks();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "BondedEras",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().balances().max_reserves();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        32
+    };
+    let key_1: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ValidatorSlashInEra",
+        vec![key_0, key_1],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().balances().max_holds();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        32
+    };
+    let key_1: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "NominatorSlashInEra",
+        vec![key_0, key_1],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().balances().max_freezes();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let storage_query = subxt::storage::dynamic("Staking", "SlashingSpans", vec![key_0]);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().staking().max_nominations();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let key_1: Value = value! {
+        32
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "SpanSlash",
+        vec![key_0, key_1],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().staking().history_depth();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "CurrentPlannedSession",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().staking().sessions_per_era();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "OffendingValidators",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().staking().bonding_duration();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "Staking",
+        "ChillThreshold",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().staking().slash_defer_duration();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let key_0: Value = value! {
+        ((8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8))
+    };
+    let key_1: Value = value! {
+        (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8)
+    };
+    let storage_query = subxt::storage::dynamic(
+        "Multisig",
+        "Multisigs",
+        vec![key_0, key_1],
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants()
-        .staking()
-        .max_nominator_rewarded_per_validator();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "ParaInherent",
+        "Included",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().staking().max_unlocking_chunks();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let storage_query = subxt::storage::dynamic(
+        "ParaInherent",
+        "OnChainVotes",
+        Vec::<Value>::new(),
+    );
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().multisig().deposit_base();
+    let result: Option<DecodedValueThunk> = api
+        .storage()
+        .at_latest()
+        .await?
+        .fetch(&storage_query)
+        .await?;
+    let constant_query = subxt::constants::dynamic("System", "BlockWeights");
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u128 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().multisig().deposit_factor();
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("System", "BlockLength");
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u128 = api.constants().at(&constant_query)?;
-    let constant_query = runtime::constants().multisig().max_signatories();
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("System", "BlockHashCount");
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let value: ::core::primitive::u32 = api.constants().at(&constant_query)?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("System", "DbWeight");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("System", "Version");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("System", "SS58Prefix");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Timestamp", "MinimumPeriod");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Balances", "ExistentialDeposit");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Balances", "MaxLocks");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Balances", "MaxReserves");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Balances", "MaxHolds");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Balances", "MaxFreezes");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Staking", "MaxNominations");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Staking", "HistoryDepth");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Staking", "SessionsPerEra");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Staking", "BondingDuration");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Staking", "SlashDeferDuration");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic(
+        "Staking",
+        "MaxNominatorRewardedPerValidator",
+    );
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Staking", "MaxUnlockingChunks");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Multisig", "DepositBase");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Multisig", "DepositFactor");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
+    let constant_query = subxt::constants::dynamic("Multisig", "MaxSignatories");
+    let api = OnlineClient::<PolkadotConfig>::new().await?;
+    let value: DecodedValueThunk = api.constants().at(&constant_query)?;
     Ok(())
 }
