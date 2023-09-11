@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use scale_info::{form::PortableForm, PortableRegistry, TypeDef, TypeDefPrimitive};
 // use scale_value::Value;
 use regex::{Captures, Regex};
-use subxt::ext::scale_value::*;
+use scale_value::{BitSequence, Composite, Primitive, Value, ValueDef, Variant};
 pub fn type_example(id: u32, types: &PortableRegistry) -> anyhow::Result<TokenStream> {
     let value: Value = type_id_example(id, types)?;
     // A scale value that is made into a string should fit the schema the value! macro expects.

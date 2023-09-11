@@ -24,28 +24,34 @@
 //! }
 //! ```
 
-use std::{borrow::Cow, collections::BTreeSet, fmt::Display};
+use std::{borrow::Cow, fmt::Display};
 
 use anyhow::{anyhow, Ok};
 use context::{ExampleContext, FileOrUrl};
 use heck::ToSnakeCase;
-use proc_macro2::{Ident, Punct, TokenStream, TokenTree};
+use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens};
-use scale_info::{
-    form::PortableForm, Field, PortableRegistry, Type, TypeDef, TypeDefArray, TypeDefCompact,
-    TypeDefPrimitive, TypeDefSequence, TypeParameter, Variant,
-};
-use subxt::ext::codec::Decode;
-use subxt_codegen::{
-    CratePath, DerivesRegistry, RuntimeGenerator, TypeDefGen, TypeGenerator, TypeSubstitutes,
-};
-use subxt_metadata::{Metadata, PalletMetadata, StorageEntryMetadata, StorageEntryType};
+use scale_info::{form::PortableForm, TypeDef, Variant};
+use subxt_codegen::{DerivesRegistry, TypeGenerator, TypeSubstitutes};
+use subxt_metadata::{PalletMetadata, StorageEntryMetadata, StorageEntryType};
 use values::{dynamic_type_example, static_type_example};
 
 pub mod context;
 /// empty mod, copy paste stuff in here to validate code quickly
 mod generated;
 pub mod values;
+
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+extern "C" {
+    fn alert(s: &str);
+}
+
+#[wasm_bindgen]
+pub fn greet(name: &str) {
+    alert(&format!("Hello, {}!", name));
+}
 
 /// The [ExampleGenerator] is a struct that can be used to generate code examples for various uses of subxt.
 /// It is intended to be embedded into the WASM of a website, to create code snippets to be displayed.
@@ -488,7 +494,7 @@ fn storage_entry_key_ty_ids(type_gen: &TypeGenerator, entry: &StorageEntryMetada
 }
 
 /// The iterator item is: (variable_name, type_id, type_path)
-fn variable_names_and_declarations<'a>(
+fn variable_names_and_declarations(
     type_gen: &TypeGenerator,
     variables: impl Iterator<Item = (impl Display, u32, impl ToTokens)>,
     context: &ExampleContext,

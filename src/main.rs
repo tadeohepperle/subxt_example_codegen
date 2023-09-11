@@ -1,12 +1,5 @@
-use std::{env::args, fs};
+use std::{fs};
 
-use subxt::{
-    ext::{
-        scale_bits,
-        scale_value::{self, value, BitSequence},
-    },
-    OnlineClient, PolkadotConfig,
-};
 use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
 
 /// Make sure you have a `polkadot.scale` file at the root of this project.
@@ -33,15 +26,15 @@ fn main() -> anyhow::Result<()> {
 
     // if executed with `cargo run -- build` we use trybuild to validate the generated code.
     // note: trybuild expects and executes `pub fn main()` in the generated code.
-    if args().skip(1).next() == Some("build".into()) {
-        let test_cases = trybuild::TestCases::new();
-        // necessary to let macro work in build:
-        fs::copy(
-            metadata_file,
-            format!("target/tests/trybuild/subxt_example_codegen/{metadata_file}"),
-        )?;
-        test_cases.pass("gen/generated.rs");
-    }
+    // if args().skip(1).next() == Some("build".into()) {
+    //     let test_cases = trybuild::TestCases::new();
+    //     // necessary to let macro work in build:
+    //     fs::copy(
+    //         metadata_file,
+    //         format!("target/tests/trybuild/subxt_example_codegen/{metadata_file}"),
+    //     )?;
+    //     test_cases.pass("gen/generated.rs");
+    // }
 
     Ok(())
 }

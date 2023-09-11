@@ -1,10 +1,9 @@
-use std::path::Path;
 
+
+use parity_scale_codec::Decode;
 use quote::format_ident;
-use subxt::ext::codec::Decode;
 use subxt_codegen::RuntimeGenerator;
 use subxt_metadata::Metadata;
-
 pub struct ExampleContext {
     pub dynamic: bool,
     pub inter_face_ident: syn::Ident,

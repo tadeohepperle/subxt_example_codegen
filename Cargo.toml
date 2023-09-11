@@ -6,18 +6,21 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-codec = "0.0.0"
+# crate-type = ["cdylib"]
 
 # these local dependencies can be used if you prefer developing locally:
-subxt = { path = "../subxt/subxt" }
+# subxt = { path = "../subxt/subxt", default-features = false, features = ["jsonrpsee", "web"], target_arch = "wasm32" }
 subxt-metadata = { path = "../subxt/metadata" }
-subxt-codegen = { path = "../subxt/codegen" }
-subxt-signer = { path = "../subxt/signer", features = ["subxt"] }
+subxt-codegen = { path = "../subxt/codegen", features = [
+    "web",
+], default-features = false }
+# subxt-signer = { path = "../subxt/signer", features = ["subxt"] }
 
 # subxt = { git = "https://github.com/paritytech/subxt", branch = "tadeo-hepperle-example-code-gen" }
 # subxt-metadata = { git = "https://github.com/paritytech/subxt", branch = "tadeo-hepperle-example-code-gen" }
 # subxt-codegen = { git = "https://github.com/paritytech/subxt", branch = "tadeo-hepperle-example-code-gen"}
 # subxt-signer = { git = "https://github.com/paritytech/subxt", branch = "tadeo-hepperle-example-code-gen", features = ["subxt"] }
+
 
 syn = "2.0.29"
 quote = "1.0.33"
@@ -27,7 +30,15 @@ heck = "0.4.1"
 prettyplease = "0.2.12"
 scale-info = "2.9.0"
 bitvec = "1.0.1"
-trybuild = "1.0.83"
-tokio = "1.32.0"
+# trybuild = "1.0.83"
+# tokio = "1.32.0"
 pollster = "0.3.0"
 regex = "1.5"
+wasm-bindgen = "0.2.87"
+scale-value = "0.12.0"
+scale-decode = "0.9.0"
+parity-scale-codec = "3.6.8"
+
+
+[lib]
+crate-type = ["cdylib", "rlib"]

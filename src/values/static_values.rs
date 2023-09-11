@@ -1,18 +1,9 @@
-use std::{collections::BTreeSet, fmt::Display};
-
 use anyhow::{anyhow, Ok};
-use heck::ToSnakeCase;
-use proc_macro2::{Ident, Punct, TokenStream, TokenTree};
+
+use proc_macro2::{TokenStream, TokenTree};
 use quote::{format_ident, quote, ToTokens};
-use scale_info::{
-    form::PortableForm, Field, PortableRegistry, Type, TypeDef, TypeDefArray, TypeDefCompact,
-    TypeDefPrimitive, TypeDefSequence, TypeParameter, Variant,
-};
-use subxt::ext::codec::Decode;
-use subxt_codegen::{
-    CratePath, DerivesRegistry, RuntimeGenerator, TypeDefGen, TypeGenerator, TypeSubstitutes,
-};
-use subxt_metadata::{Metadata, PalletMetadata, StorageEntryMetadata, StorageEntryType};
+use scale_info::{form::PortableForm, Field, Type, TypeDef, TypeDefPrimitive};
+use subxt_codegen::{CratePath, TypeDefGen, TypeGenerator};
 
 pub enum CompactMode {
     // explicitely stating Compact(u32)
@@ -204,10 +195,7 @@ fn primitive_example(def: &TypeDefPrimitive) -> TokenStream {
 /// Simple Heuristics. Just makes array initialization shorter if is `Copy`.
 fn type_def_is_copy(type_gen: &TypeGenerator, ty: &TypeDef<PortableForm>) -> bool {
     match ty {
-        TypeDef::Primitive(def) => match def {
-            TypeDefPrimitive::Str => false,
-            _ => true,
-        },
+        TypeDef::Primitive(def) => !matches!(def, TypeDefPrimitive::Str),
         scale_info::TypeDef::Array(def) => {
             let item_type = type_gen.resolve_type(def.type_param.id);
             def.len <= 32 && type_def_is_copy(type_gen, &item_type.type_def)
