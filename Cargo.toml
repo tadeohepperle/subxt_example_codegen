@@ -5,11 +5,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
 [dependencies]
 # crate-type = ["cdylib"]
 
 # these local dependencies can be used if you prefer developing locally:
-# subxt = { path = "../subxt/subxt", default-features = false, features = ["jsonrpsee", "web"], target_arch = "wasm32" }
+subxt = { path = "../subxt/subxt", default-features = false, features = [
+    "jsonrpsee",
+    "web",
+], target_arch = "wasm32" }
 subxt-metadata = { path = "../subxt/metadata" }
 subxt-codegen = { path = "../subxt/codegen", features = [
     "web",
@@ -38,6 +42,10 @@ wasm-bindgen = "0.2.87"
 scale-value = "0.12.0"
 scale-decode = "0.9.0"
 parity-scale-codec = "3.6.8"
+wasm-bindgen-futures = "0.4.37"
+js-sys = "0.3.64"
+serde = { version = "1.0.188", features = ["derive"] }
+serde-wasm-bindgen = "0.5.0"
 
 
 [lib]

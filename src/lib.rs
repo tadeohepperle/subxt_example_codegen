@@ -40,18 +40,9 @@ pub mod context;
 /// empty mod, copy paste stuff in here to validate code quickly
 mod generated;
 pub mod values;
+pub mod wasm_interface;
 
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
-}
-
-#[wasm_bindgen]
-pub fn greet(name: &str) {
-    alert(&format!("Hello, {}!", name));
-}
+pub use wasm_interface::*;
 
 /// The [ExampleGenerator] is a struct that can be used to generate code examples for various uses of subxt.
 /// It is intended to be embedded into the WASM of a website, to create code snippets to be displayed.

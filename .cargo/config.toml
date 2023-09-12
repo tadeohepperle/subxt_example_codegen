@@ -1,0 +1,9 @@
+[rust-analyzer]
+checkArgs = ["--target", "wasm32-unknown-unknown"]
+
+[build]
+target = "wasm32-unknown-unknown"
+
+
+[check]
+target = "wasm32-unknown-unknown"
