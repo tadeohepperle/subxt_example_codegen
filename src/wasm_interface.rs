@@ -4,8 +4,10 @@ use anyhow::anyhow;
 use parity_scale_codec::Decode;
 use serde::Serialize;
 use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
-use subxt_metadata::Metadata;
+use subxt_metadata::{Metadata, PalletMetadata};
 use wasm_bindgen::prelude::*;
+
+use crate::{context::ExampleContext, ExampleGenerator};
 
 macro_rules! console_log {
     // Note that this is using the `log` function imported above during
@@ -23,8 +25,10 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn greet(name: &str) {
-    alert(&format!("Hello, {}!", name));
+pub fn make_pretty(code: &str) -> String {
+    let syn_tree = syn::parse_file(&code).unwrap();
+    let pretty = prettyplease::unparse(&syn_tree);
+    pretty
 }
 
 #[wasm_bindgen]
@@ -107,6 +111,78 @@ impl Client {
         let contents = MetadataContent::from_metadata(&metadata);
         serde_wasm_bindgen::to_value(&contents).expect("should always work")
     }
+
+    #[wasm_bindgen(js_name = "palletDocs")]
+    pub fn pallet_docs(&self, pallet_name: &str) -> JsValue {
+        let metadata = self.kind.metadata();
+        let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
+            return JsValue::UNDEFINED;
+        };
+        serde_wasm_bindgen::to_value(pallet_metadata.docs()).expect("should always work")
+    }
+
+    #[wasm_bindgen(js_name = "palletContent")]
+    pub fn pallet_content(&self, pallet_name: &str) -> JsValue {
+        let metadata = self.kind.metadata();
+        let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
+            console_log!("pallet {pallet_name} not found in metadata");
+            return JsValue::UNDEFINED;
+        };
+        let pallet_content = PalletContent::from_pallet_metadata(pallet_metadata);
+        console_log!("pallet {pallet_name} found, content: {pallet_content:?}");
+        serde_wasm_bindgen::to_value(&pallet_content).expect("should always work")
+    }
+
+    #[wasm_bindgen(js_name = "callContent")]
+    pub fn call_content(&self, pallet_name: &str, call_name: &str) -> JsValue {
+        let metadata = self.kind.metadata();
+        let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
+            return JsValue::UNDEFINED;
+        };
+        let Some(call) = pallet_metadata.call_variant_by_name(call_name) else {
+            return JsValue::UNDEFINED;
+        };
+
+        let docs = &call.docs;
+
+        // static code example
+        let example_generator_static =
+            ExampleGenerator::new(self.example_context(false), &metadata);
+        let Ok(code_example_static) =
+            example_generator_static.call_example_wrapped(pallet_name, call_name)
+        else {
+            console_log!("generating static call example failed ({pallet_name} {call_name}). Return undefined");
+            return JsValue::UNDEFINED;
+        };
+
+        // dynamic code example
+        let example_generator_dynamic =
+            ExampleGenerator::new(self.example_context(true), &metadata);
+        let Ok(code_example_dynamic) =
+            example_generator_dynamic.call_example_wrapped(pallet_name, call_name)
+        else {
+            console_log!("generating static call example failed ({pallet_name} {call_name}). Return undefined");
+            return JsValue::UNDEFINED;
+        };
+
+        let content: CallContent = CallContent {
+            pallet_name,
+            call_name,
+            docs,
+            code_example_static: &make_pretty(&code_example_static.to_string()),
+            code_example_dynamic: &make_pretty(&code_example_dynamic.to_string()),
+        };
+        serde_wasm_bindgen::to_value(&content).expect("should always work")
+    }
+
+    fn example_context(&self, dynamic: bool) -> ExampleContext {
+        match &self.kind {
+            ClientKind::Offline {
+                metadata_file_name, ..
+            } => ExampleContext::from_file(metadata_file_name, dynamic),
+            ClientKind::Online { url, .. } => ExampleContext::from_url(url, dynamic),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -117,7 +193,7 @@ pub struct MetadataContent<'a> {
     custom_values: Vec<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct PalletContent<'a> {
     pub name: &'a str,
     pub calls: Vec<&'a str>,
@@ -125,31 +201,20 @@ pub struct PalletContent<'a> {
     pub constants: Vec<&'a str>,
 }
 
+#[derive(Serialize)]
+pub struct CallContent<'a> {
+    pub pallet_name: &'a str,
+    pub call_name: &'a str,
+    pub docs: &'a Vec<String>,
+    pub code_example_static: &'a str,
+    pub code_example_dynamic: &'a str,
+}
+
 impl<'a> MetadataContent<'a> {
     pub fn from_metadata(metadata: &'a subxt_metadata::Metadata) -> MetadataContent<'a> {
         let pallets = metadata
             .pallets()
-            .map(|p| {
-                let name = p.name();
-                let calls: Vec<&str> = if let Some(c) = p.call_variants() {
-                    c.iter().map(|c| c.name.as_str()).collect()
-                } else {
-                    vec![]
-                };
-                let storage_items = if let Some(s) = p.storage() {
-                    s.entries().iter().map(|s| s.name()).collect()
-                } else {
-                    vec![]
-                };
-                let constants = p.constants().map(|c| c.name()).collect();
-
-                PalletContent {
-                    name,
-                    calls,
-                    storage_entries: storage_items,
-                    constants,
-                }
-            })
+            .map(|p| PalletContent::from_pallet_metadata(p))
             .collect();
 
         let runtime_apis: Vec<&str> = metadata.runtime_api_traits().map(|e| e.name()).collect();
@@ -163,6 +228,30 @@ impl<'a> MetadataContent<'a> {
             pallets,
             runtime_apis,
             custom_values,
+        }
+    }
+}
+
+impl<'a> PalletContent<'a> {
+    pub fn from_pallet_metadata(pallet_metadata: PalletMetadata<'a>) -> PalletContent<'a> {
+        let name = pallet_metadata.name();
+        let calls: Vec<&str> = if let Some(c) = pallet_metadata.call_variants() {
+            c.iter().map(|c| c.name.as_str()).collect()
+        } else {
+            vec![]
+        };
+        let storage_items = if let Some(s) = pallet_metadata.storage() {
+            s.entries().iter().map(|s| s.name()).collect()
+        } else {
+            vec![]
+        };
+        let constants = pallet_metadata.constants().map(|c| c.name()).collect();
+
+        PalletContent {
+            name,
+            calls,
+            storage_entries: storage_items,
+            constants,
         }
     }
 }

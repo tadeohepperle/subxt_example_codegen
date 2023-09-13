@@ -1,4 +1,4 @@
-use std::{fs};
+use std::fs;
 
 use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
 
@@ -13,7 +13,7 @@ use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
 fn main() -> anyhow::Result<()> {
     let metadata_file = "polkadot.scale";
     let example_context = ExampleContext::from_file(metadata_file, true);
-    let example_gen = ExampleGenerator::from_context(example_context)?;
+    let example_gen = ExampleGenerator::fetch_from_context(example_context)?;
     let tokens = example_gen.all_examples_wrapped()?;
 
     // you can also try something like this instead:

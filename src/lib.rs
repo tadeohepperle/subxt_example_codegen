@@ -60,12 +60,19 @@ pub struct ExampleGenerator<'a> {
 
 impl<'a> ExampleGenerator<'a> {
     /// Constructs an [ExampleGenerator] from a file path that leads to some scale encoded metadata.
-    pub fn from_context(context: ExampleContext) -> anyhow::Result<Self> {
+    pub fn fetch_from_context(context: ExampleContext) -> anyhow::Result<Self> {
         let metadata = context.file_or_url.fetch_metadata()?;
         Ok(Self {
             metadata: Cow::Owned(metadata),
             context,
         })
+    }
+
+    pub fn new(context: ExampleContext, metadata: &'a subxt_metadata::Metadata) -> Self {
+        Self {
+            metadata: Cow::Borrowed(metadata),
+            context,
+        }
     }
 
     //////////////////////////////////////////////

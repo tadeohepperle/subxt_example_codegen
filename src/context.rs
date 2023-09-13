@@ -1,5 +1,3 @@
-
-
 use parity_scale_codec::Decode;
 use quote::format_ident;
 use subxt_codegen::RuntimeGenerator;
@@ -16,6 +14,14 @@ impl ExampleContext {
             dynamic,
             inter_face_ident: format_ident!("runtime"),
             file_or_url: FileOrUrl::File(file_path.into()),
+        }
+    }
+
+    pub fn from_url(url: &str, dynamic: bool) -> Self {
+        ExampleContext {
+            dynamic,
+            inter_face_ident: format_ident!("runtime"),
+            file_or_url: FileOrUrl::Url(url.into()),
         }
     }
 }
