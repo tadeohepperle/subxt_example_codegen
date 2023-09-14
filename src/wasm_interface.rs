@@ -1,11 +1,12 @@
 //! Interface callable from JavaScript
 
-use anyhow::anyhow;
+use std::{convert::Infallible, fmt::Debug, ops::FromResidual};
+
 use parity_scale_codec::Decode;
 use serde::Serialize;
 use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
 use subxt_metadata::{Metadata, PalletMetadata};
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{convert::IntoWasmAbi, prelude::*};
 
 use crate::{context::ExampleContext, ExampleGenerator};
 
@@ -134,45 +135,66 @@ impl Client {
     }
 
     #[wasm_bindgen(js_name = "callContent")]
-    pub fn call_content(&self, pallet_name: &str, call_name: &str) -> JsValue {
+    pub fn call_content(&self, pallet_name: &str, call_name: &str) -> MyJsValue {
         let metadata = self.kind.metadata();
-        let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
-            return JsValue::UNDEFINED;
-        };
-        let Some(call) = pallet_metadata.call_variant_by_name(call_name) else {
-            return JsValue::UNDEFINED;
-        };
+        let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
+        let call = pallet_metadata.call_variant_by_name(call_name)?;
 
         let docs = &call.docs;
 
         // static code example
         let example_generator_static =
             ExampleGenerator::new(self.example_context(false), &metadata);
-        let Ok(code_example_static) =
-            example_generator_static.call_example_wrapped(pallet_name, call_name)
-        else {
-            console_log!("generating static call example failed ({pallet_name} {call_name}). Return undefined");
-            return JsValue::UNDEFINED;
-        };
-
+        let code_example_static =
+            example_generator_static.call_example_wrapped(pallet_name, call_name)?;
         // dynamic code example
         let example_generator_dynamic =
             ExampleGenerator::new(self.example_context(true), &metadata);
-        let Ok(code_example_dynamic) =
-            example_generator_dynamic.call_example_wrapped(pallet_name, call_name)
-        else {
-            console_log!("generating static call example failed ({pallet_name} {call_name}). Return undefined");
-            return JsValue::UNDEFINED;
-        };
-
-        let content: CallContent = CallContent {
+        let code_example_dynamic =
+            example_generator_dynamic.call_example_wrapped(pallet_name, call_name)?;
+        let content: ItemContent = ItemContent {
             pallet_name,
-            call_name,
+            name: call_name,
             docs,
             code_example_static: &make_pretty(&code_example_static.to_string()),
             code_example_dynamic: &make_pretty(&code_example_dynamic.to_string()),
         };
-        serde_wasm_bindgen::to_value(&content).expect("should always work")
+        serde_wasm_bindgen::to_value(&content)
+            .expect("should always work")
+            .into()
+    }
+
+    #[wasm_bindgen(js_name = "storageEntryContent")]
+    pub fn storage_entry_content(&self, pallet_name: &str, entry_name: &str) -> MyJsValue {
+        let metadata = self.kind.metadata();
+        let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
+        let storage = pallet_metadata.storage()?;
+        let entry = storage.entry_by_name(entry_name)?;
+
+        let docs = entry.docs();
+
+        // static code example
+        let example_generator_static =
+            ExampleGenerator::new(self.example_context(false), &metadata);
+        let code_example_static =
+            example_generator_static.storage_example_wrapped(pallet_name, entry_name)?;
+
+        // dynamic code example
+        let example_generator_dynamic =
+            ExampleGenerator::new(self.example_context(true), &metadata);
+        let code_example_dynamic =
+            example_generator_dynamic.storage_example_wrapped(pallet_name, entry_name)?;
+
+        let content: ItemContent = ItemContent {
+            pallet_name,
+            name: entry_name,
+            docs,
+            code_example_static: &make_pretty(&code_example_static.to_string()),
+            code_example_dynamic: &make_pretty(&code_example_dynamic.to_string()),
+        };
+        serde_wasm_bindgen::to_value(&content)
+            .expect("should always work")
+            .into()
     }
 
     fn example_context(&self, dynamic: bool) -> ExampleContext {
@@ -182,6 +204,42 @@ impl Client {
             } => ExampleContext::from_file(metadata_file_name, dynamic),
             ClientKind::Online { url, .. } => ExampleContext::from_url(url, dynamic),
         }
+    }
+}
+
+/// New-Type struct to implement short circuiting with `FromResidual` trait.
+pub struct MyJsValue(JsValue);
+
+impl FromResidual<std::option::Option<Infallible>> for MyJsValue {
+    fn from_residual(residual: std::option::Option<Infallible>) -> Self {
+        MyJsValue(JsValue::UNDEFINED)
+    }
+}
+
+impl<T: Debug> FromResidual<Result<Infallible, T>> for MyJsValue {
+    fn from_residual(residual: Result<Infallible, T>) -> Self {
+        console_log!("Error: {residual:?}. Returning JsValue::UNDEFINED");
+        MyJsValue(JsValue::UNDEFINED)
+    }
+}
+
+impl From<JsValue> for MyJsValue {
+    fn from(value: JsValue) -> Self {
+        Self(value)
+    }
+}
+
+impl wasm_bindgen::describe::WasmDescribe for MyJsValue {
+    fn describe() {
+        JsValue::describe()
+    }
+}
+
+impl IntoWasmAbi for MyJsValue {
+    type Abi = <JsValue as IntoWasmAbi>::Abi;
+
+    fn into_abi(self) -> Self::Abi {
+        self.0.into_abi()
     }
 }
 
@@ -202,10 +260,10 @@ pub struct PalletContent<'a> {
 }
 
 #[derive(Serialize)]
-pub struct CallContent<'a> {
+pub struct ItemContent<'a> {
     pub pallet_name: &'a str,
-    pub call_name: &'a str,
-    pub docs: &'a Vec<String>,
+    pub name: &'a str,
+    pub docs: &'a [String],
     pub code_example_static: &'a str,
     pub code_example_dynamic: &'a str,
 }
