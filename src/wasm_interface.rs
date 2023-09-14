@@ -9,7 +9,7 @@ use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
 use subxt_metadata::{Metadata, PalletMetadata};
 use wasm_bindgen::{convert::IntoWasmAbi, prelude::*};
 
-use crate::{context::ExampleContext, ExampleGenerator};
+use crate::{context::ExampleContext, storage_entry_key_ty_ids, ExampleGenerator};
 
 macro_rules! console_log {
     // Note that this is using the `log` function imported above during
@@ -67,6 +67,13 @@ impl ClientKind {
             ClientKind::Online { client, .. } => client.metadata(),
         }
     }
+
+    fn online_client(&self) -> Option<&OnlineClient<SubstrateConfig>> {
+        match &self {
+            ClientKind::Offline { .. } => None,
+            ClientKind::Online { client, .. } => Some(client),
+        }
+    }
 }
 
 impl Client {
@@ -106,6 +113,17 @@ impl Client {
             example_gen_dynamic,
             example_gen_static,
         }
+    }
+
+    /// resolves the provided type id and returns the type path as a string.
+    fn resolve_type_path(&self, type_id: u32) -> Option<String> {
+        let type_gen = self.example_gen_static.type_gen();
+        type_gen.types().resolve(type_id)?;
+        let type_path_string = type_gen
+            .resolve_type_path(type_id)
+            .to_token_stream()
+            .to_string();
+        Some(type_path_string)
     }
 }
 
@@ -226,10 +244,20 @@ impl Client {
             .example_gen_dynamic
             .storage_example_wrapped(pallet_name, entry_name)?;
 
+        let value_type = self.resolve_type_path(entry.entry_type().value_ty())?;
+
+        let key_types: Vec<String> =
+            storage_entry_key_ty_ids(&self.example_gen_static.type_gen(), entry)
+                .into_iter()
+                .map(|ty_id| self.resolve_type_path(ty_id))
+                .collect::<Option<Vec<String>>>()?;
+
         let content = StorageEntryContent {
             pallet_name,
             name: entry_name,
             docs: entry.docs(),
+            value_type: &value_type,
+            key_types: &key_types,
             code_example_static: &format_code(&code_example_static.to_string()),
             code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
         };
@@ -255,16 +283,13 @@ impl Client {
             .constant_example_wrapped(pallet_name, constant_name)?;
 
         let value = self.constant_at(pallet_name, constant_name)?;
-        let value_type = self
-            .example_gen_static
-            .type_gen()
-            .resolve_type_path(constant.ty());
+        let value_type = self.resolve_type_path(constant.ty())?;
 
         let content = ConstantContent {
             pallet_name,
             name: constant_name,
             docs: constant.docs(),
-            value_type: &value_type.to_token_stream().to_string(),
+            value_type: &value_type,
             value: &value.to_string(),
             code_example_static: &format_code(&code_example_static.to_string()),
             code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
@@ -272,6 +297,32 @@ impl Client {
         serde_wasm_bindgen::to_value(&content)
             .expect("should always work")
             .into()
+    }
+
+    /// Dynamically fetches the value of a keyless storage entry.
+    /// Only works if this is an online client.
+    #[wasm_bindgen(js_name = "fetchKeylessStorageValue")]
+    pub async fn fetch_keyless_storage_value(
+        &self,
+        pallet_name: &str,
+        entry_name: &str,
+    ) -> MyJsValue {
+        let online_client = self.kind.online_client()?;
+        let metadata = self.metadata();
+        let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
+        let storage = pallet_metadata.storage()?;
+        let entry = storage.entry_by_name(entry_name)?;
+
+        if entry.entry_type().key_ty().is_some() {
+            return JsValue::UNDEFINED.into();
+        }
+
+        let storage_client = online_client.storage().at_latest().await?;
+        let storage_address = subxt::storage::dynamic::<()>(pallet_name, entry_name, vec![]);
+        let value: scale_value::Value<u32> =
+            storage_client.fetch(&storage_address).await??.to_value()?;
+
+        JsValue::from_str(&value.to_string()).into()
     }
 }
 
@@ -294,6 +345,12 @@ impl<T: Debug> FromResidual<Result<Infallible, T>> for MyJsValue {
 impl From<JsValue> for MyJsValue {
     fn from(value: JsValue) -> Self {
         Self(value)
+    }
+}
+
+impl From<MyJsValue> for JsValue {
+    fn from(value: MyJsValue) -> Self {
+        value.0
     }
 }
 
@@ -391,6 +448,8 @@ pub struct StorageEntryContent<'a> {
     pub docs: &'a [String],
     pub code_example_static: &'a str,
     pub code_example_dynamic: &'a str,
+    pub value_type: &'a str,
+    pub key_types: &'a [String],
 }
 
 /// Represents all the information about a constant that we want to show to a user.

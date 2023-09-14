@@ -43,7 +43,6 @@ pub mod context;
 mod generated;
 pub mod values;
 pub mod wasm_interface;
-
 pub use wasm_interface::*;
 
 /// The [ExampleGenerator] is a struct that can be used to generate code examples for various uses of subxt.
@@ -476,7 +475,10 @@ fn wrap_with_imports(
     )
 }
 
-fn storage_entry_key_ty_ids(type_gen: &TypeGenerator, entry: &StorageEntryMetadata) -> Vec<u32> {
+pub fn storage_entry_key_ty_ids(
+    type_gen: &TypeGenerator,
+    entry: &StorageEntryMetadata,
+) -> Vec<u32> {
     match entry.entry_type() {
         StorageEntryType::Plain(_) => vec![],
         StorageEntryType::Map { key_ty, .. } => {
