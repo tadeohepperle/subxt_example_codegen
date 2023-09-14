@@ -1,8 +1,9 @@
 //! Interface callable from JavaScript
 
-use std::{convert::Infallible, fmt::Debug, ops::FromResidual};
+use std::{borrow::Cow, convert::Infallible, fmt::Debug, ops::FromResidual};
 
 use parity_scale_codec::Decode;
+use quote::ToTokens;
 use serde::Serialize;
 use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
 use subxt_metadata::{Metadata, PalletMetadata};
@@ -26,7 +27,7 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn make_pretty(code: &str) -> String {
+pub fn format_code(code: &str) -> String {
     let syn_tree = syn::parse_file(&code).unwrap();
     let pretty = prettyplease::unparse(&syn_tree);
     pretty
@@ -35,6 +36,8 @@ pub fn make_pretty(code: &str) -> String {
 #[wasm_bindgen]
 pub struct Client {
     kind: ClientKind,
+    example_gen_dynamic: ExampleGenerator<'static>,
+    example_gen_static: ExampleGenerator<'static>,
 }
 
 pub enum ClientKind {
@@ -49,10 +52,59 @@ pub enum ClientKind {
 }
 
 impl ClientKind {
-    pub fn metadata(&self) -> subxt::Metadata {
-        match self {
+    fn example_context(&self, dynamic: bool) -> ExampleContext {
+        match &self {
+            ClientKind::Offline {
+                metadata_file_name, ..
+            } => ExampleContext::from_file(metadata_file_name, dynamic),
+            ClientKind::Online { url, .. } => ExampleContext::from_url(url, dynamic),
+        }
+    }
+
+    fn metadata(&self) -> subxt::Metadata {
+        match &self {
             ClientKind::Offline { client, .. } => client.metadata(),
             ClientKind::Online { client, .. } => client.metadata(),
+        }
+    }
+}
+
+impl Client {
+    fn metadata(&self) -> subxt::Metadata {
+        self.kind.metadata()
+    }
+
+    // dynamic lookup of constant value
+    fn constant_at(
+        &self,
+        pallet_name: &str,
+        constant_name: &str,
+    ) -> anyhow::Result<scale_value::Value<u32>> {
+        let address = subxt::constants::dynamic(pallet_name, constant_name);
+        let decoded_value_thunk = match &self.kind {
+            ClientKind::Offline { client, .. } => {
+                let constants_client = client.constants();
+                constants_client.at(&address)?
+            }
+            ClientKind::Online { client, .. } => {
+                let constants_client = client.constants();
+                constants_client.at(&address)?
+            }
+        };
+        let scale_value = decoded_value_thunk.to_value()?;
+        Ok(scale_value)
+    }
+
+    fn new(kind: ClientKind) -> Self {
+        let metadata = kind.metadata();
+        let example_gen_dynamic =
+            ExampleGenerator::new(metadata.clone(), Cow::Owned(kind.example_context(true)));
+        let example_gen_static =
+            ExampleGenerator::new(metadata, Cow::Owned(kind.example_context(true)));
+        Self {
+            kind,
+            example_gen_dynamic,
+            example_gen_static,
         }
     }
 }
@@ -82,12 +134,10 @@ impl Client {
             metadata,
         );
 
-        Ok(Client {
-            kind: ClientKind::Offline {
-                metadata_file_name: metadata_file_name.into(),
-                client,
-            },
-        })
+        Ok(Client::new(ClientKind::Offline {
+            metadata_file_name: metadata_file_name.into(),
+            client,
+        }))
     }
 
     /// Creates an OnlineClient from a given url
@@ -96,26 +146,24 @@ impl Client {
         console_log!("try to create client from url {url}");
         let client_or_err = subxt::OnlineClient::<SubstrateConfig>::from_url(url).await;
         match client_or_err {
-            Ok(client) => Ok(Client {
-                kind: ClientKind::Online {
-                    url: url.into(),
-                    client,
-                },
-            }),
+            Ok(client) => Ok(Client::new(ClientKind::Online {
+                url: url.into(),
+                client,
+            })),
             Err(err) => Err(format!("{err}")),
         }
     }
 
     #[wasm_bindgen(js_name = "metadataContent")]
     pub fn metadata_content(&self) -> JsValue {
-        let metadata = self.kind.metadata();
+        let metadata = self.metadata();
         let contents = MetadataContent::from_metadata(&metadata);
         serde_wasm_bindgen::to_value(&contents).expect("should always work")
     }
 
     #[wasm_bindgen(js_name = "palletDocs")]
     pub fn pallet_docs(&self, pallet_name: &str) -> JsValue {
-        let metadata = self.kind.metadata();
+        let metadata = self.metadata();
         let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
             return JsValue::UNDEFINED;
         };
@@ -124,7 +172,7 @@ impl Client {
 
     #[wasm_bindgen(js_name = "palletContent")]
     pub fn pallet_content(&self, pallet_name: &str) -> JsValue {
-        let metadata = self.kind.metadata();
+        let metadata = self.metadata();
         let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
             console_log!("pallet {pallet_name} not found in metadata");
             return JsValue::UNDEFINED;
@@ -136,28 +184,25 @@ impl Client {
 
     #[wasm_bindgen(js_name = "callContent")]
     pub fn call_content(&self, pallet_name: &str, call_name: &str) -> MyJsValue {
-        let metadata = self.kind.metadata();
+        let metadata = self.metadata();
         let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
         let call = pallet_metadata.call_variant_by_name(call_name)?;
 
-        let docs = &call.docs;
-
         // static code example
-        let example_generator_static =
-            ExampleGenerator::new(self.example_context(false), &metadata);
-        let code_example_static =
-            example_generator_static.call_example_wrapped(pallet_name, call_name)?;
+        let code_example_static = self
+            .example_gen_static
+            .call_example_wrapped(pallet_name, call_name)?;
+
         // dynamic code example
-        let example_generator_dynamic =
-            ExampleGenerator::new(self.example_context(true), &metadata);
-        let code_example_dynamic =
-            example_generator_dynamic.call_example_wrapped(pallet_name, call_name)?;
-        let content: ItemContent = ItemContent {
+        let code_example_dynamic = self
+            .example_gen_dynamic
+            .call_example_wrapped(pallet_name, call_name)?;
+        let content = CallContent {
             pallet_name,
             name: call_name,
-            docs,
-            code_example_static: &make_pretty(&code_example_static.to_string()),
-            code_example_dynamic: &make_pretty(&code_example_dynamic.to_string()),
+            docs: &call.docs,
+            code_example_static: &format_code(&code_example_static.to_string()),
+            code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
         };
         serde_wasm_bindgen::to_value(&content)
             .expect("should always work")
@@ -166,52 +211,75 @@ impl Client {
 
     #[wasm_bindgen(js_name = "storageEntryContent")]
     pub fn storage_entry_content(&self, pallet_name: &str, entry_name: &str) -> MyJsValue {
-        let metadata = self.kind.metadata();
+        let metadata = self.metadata();
         let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
         let storage = pallet_metadata.storage()?;
         let entry = storage.entry_by_name(entry_name)?;
 
-        let docs = entry.docs();
-
         // static code example
-        let example_generator_static =
-            ExampleGenerator::new(self.example_context(false), &metadata);
-        let code_example_static =
-            example_generator_static.storage_example_wrapped(pallet_name, entry_name)?;
+        let code_example_static = self
+            .example_gen_static
+            .storage_example_wrapped(pallet_name, entry_name)?;
 
         // dynamic code example
-        let example_generator_dynamic =
-            ExampleGenerator::new(self.example_context(true), &metadata);
-        let code_example_dynamic =
-            example_generator_dynamic.storage_example_wrapped(pallet_name, entry_name)?;
+        let code_example_dynamic = self
+            .example_gen_dynamic
+            .storage_example_wrapped(pallet_name, entry_name)?;
 
-        let content: ItemContent = ItemContent {
+        let content = StorageEntryContent {
             pallet_name,
             name: entry_name,
-            docs,
-            code_example_static: &make_pretty(&code_example_static.to_string()),
-            code_example_dynamic: &make_pretty(&code_example_dynamic.to_string()),
+            docs: entry.docs(),
+            code_example_static: &format_code(&code_example_static.to_string()),
+            code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
         };
         serde_wasm_bindgen::to_value(&content)
             .expect("should always work")
             .into()
     }
 
-    fn example_context(&self, dynamic: bool) -> ExampleContext {
-        match &self.kind {
-            ClientKind::Offline {
-                metadata_file_name, ..
-            } => ExampleContext::from_file(metadata_file_name, dynamic),
-            ClientKind::Online { url, .. } => ExampleContext::from_url(url, dynamic),
-        }
+    #[wasm_bindgen(js_name = "constantContent")]
+    pub fn constant_content(&self, pallet_name: &str, constant_name: &str) -> MyJsValue {
+        let metadata = self.metadata();
+        let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
+        let constant = pallet_metadata.constant_by_name(constant_name)?;
+
+        // static code example
+        let code_example_static = self
+            .example_gen_static
+            .constant_example_wrapped(pallet_name, constant_name)?;
+
+        // dynamic code example
+        let code_example_dynamic = self
+            .example_gen_dynamic
+            .constant_example_wrapped(pallet_name, constant_name)?;
+
+        let value = self.constant_at(pallet_name, constant_name)?;
+        let value_type = self
+            .example_gen_static
+            .type_gen()
+            .resolve_type_path(constant.ty());
+
+        let content = ConstantContent {
+            pallet_name,
+            name: constant_name,
+            docs: constant.docs(),
+            value_type: &value_type.to_token_stream().to_string(),
+            value: &value.to_string(),
+            code_example_static: &format_code(&code_example_static.to_string()),
+            code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
+        };
+        serde_wasm_bindgen::to_value(&content)
+            .expect("should always work")
+            .into()
     }
 }
 
 /// New-Type struct to implement short circuiting with `FromResidual` trait.
 pub struct MyJsValue(JsValue);
 
-impl FromResidual<std::option::Option<Infallible>> for MyJsValue {
-    fn from_residual(residual: std::option::Option<Infallible>) -> Self {
+impl FromResidual<Option<Infallible>> for MyJsValue {
+    fn from_residual(_: Option<Infallible>) -> Self {
         MyJsValue(JsValue::UNDEFINED)
     }
 }
@@ -235,7 +303,7 @@ impl wasm_bindgen::describe::WasmDescribe for MyJsValue {
     }
 }
 
-impl IntoWasmAbi for MyJsValue {
+impl wasm_bindgen::convert::IntoWasmAbi for MyJsValue {
     type Abi = <JsValue as IntoWasmAbi>::Abi;
 
     fn into_abi(self) -> Self::Abi {
@@ -249,23 +317,6 @@ pub struct MetadataContent<'a> {
     runtime_apis: Vec<&'a str>,
     // note: String here, because I had lifetime issues otherwise
     custom_values: Vec<String>,
-}
-
-#[derive(Serialize, Debug)]
-pub struct PalletContent<'a> {
-    pub name: &'a str,
-    pub calls: Vec<&'a str>,
-    pub storage_entries: Vec<&'a str>,
-    pub constants: Vec<&'a str>,
-}
-
-#[derive(Serialize)]
-pub struct ItemContent<'a> {
-    pub pallet_name: &'a str,
-    pub name: &'a str,
-    pub docs: &'a [String],
-    pub code_example_static: &'a str,
-    pub code_example_dynamic: &'a str,
 }
 
 impl<'a> MetadataContent<'a> {
@@ -288,6 +339,14 @@ impl<'a> MetadataContent<'a> {
             custom_values,
         }
     }
+}
+
+#[derive(Serialize, Debug)]
+pub struct PalletContent<'a> {
+    pub name: &'a str,
+    pub calls: Vec<&'a str>,
+    pub storage_entries: Vec<&'a str>,
+    pub constants: Vec<&'a str>,
 }
 
 impl<'a> PalletContent<'a> {
@@ -314,19 +373,34 @@ impl<'a> PalletContent<'a> {
     }
 }
 
-/*
-Pallets:
- - assaasa
- - sasaass
- - assasas
- - assasas
-   - Extrinsics
-     - hahahah
-     - ahshshh
-     - ashashh
-   - Storage Items
-   - Constants
+/// Represents all the information about a call that we want to show to a user.
+#[derive(Serialize)]
+pub struct CallContent<'a> {
+    pub pallet_name: &'a str,
+    pub name: &'a str,
+    pub docs: &'a [String],
+    pub code_example_static: &'a str,
+    pub code_example_dynamic: &'a str,
+}
 
-Custom Values
-Runtime APIS
-*/
+/// Represents all the information about a storage entry that we want to show to a user.
+#[derive(Serialize)]
+pub struct StorageEntryContent<'a> {
+    pub pallet_name: &'a str,
+    pub name: &'a str,
+    pub docs: &'a [String],
+    pub code_example_static: &'a str,
+    pub code_example_dynamic: &'a str,
+}
+
+/// Represents all the information about a constant that we want to show to a user.
+#[derive(Serialize)]
+pub struct ConstantContent<'a> {
+    pub pallet_name: &'a str,
+    pub name: &'a str,
+    pub docs: &'a [String],
+    pub code_example_static: &'a str,
+    pub code_example_dynamic: &'a str,
+    pub value: &'a str,
+    pub value_type: &'a str,
+}

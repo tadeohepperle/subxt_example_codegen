@@ -56,8 +56,8 @@ pub use wasm_interface::*;
 ///
 /// which all generate some executable rust code that should contain all imports
 pub struct ExampleGenerator<'a> {
-    pub metadata: Cow<'a, subxt_metadata::Metadata>,
-    pub context: ExampleContext,
+    pub metadata: subxt::Metadata,
+    pub context: Cow<'a, ExampleContext>,
 }
 
 impl<'a> ExampleGenerator<'a> {
@@ -65,16 +65,13 @@ impl<'a> ExampleGenerator<'a> {
     pub fn fetch_from_context(context: ExampleContext) -> anyhow::Result<Self> {
         let metadata = context.file_or_url.fetch_metadata()?;
         Ok(Self {
-            metadata: Cow::Owned(metadata),
-            context,
+            metadata: metadata.into(),
+            context: Cow::Owned(context),
         })
     }
 
-    pub fn new(context: ExampleContext, metadata: &'a subxt_metadata::Metadata) -> Self {
-        Self {
-            metadata: Cow::Borrowed(metadata),
-            context,
-        }
+    pub fn new(metadata: subxt::Metadata, context: Cow<'a, ExampleContext>) -> Self {
+        Self { metadata, context }
     }
 
     //////////////////////////////////////////////
