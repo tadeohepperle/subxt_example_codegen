@@ -107,7 +107,7 @@ impl Client {
         let example_gen_dynamic =
             ExampleGenerator::new(metadata.clone(), Cow::Owned(kind.example_context(true)));
         let example_gen_static =
-            ExampleGenerator::new(metadata, Cow::Owned(kind.example_context(true)));
+            ExampleGenerator::new(metadata, Cow::Owned(kind.example_context(false)));
         Self {
             kind,
             example_gen_dynamic,
