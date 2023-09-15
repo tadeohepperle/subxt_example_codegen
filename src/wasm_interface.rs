@@ -6,7 +6,7 @@ use parity_scale_codec::Decode;
 use quote::ToTokens;
 use serde::Serialize;
 use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
-use subxt_metadata::{Metadata, PalletMetadata};
+use subxt_metadata::{Metadata, PalletMetadata, RuntimeApiMetadata};
 use wasm_bindgen::{convert::IntoWasmAbi, prelude::*};
 
 use crate::{context::ExampleContext, storage_entry_key_ty_ids, ExampleGenerator};
@@ -180,24 +180,23 @@ impl Client {
     }
 
     #[wasm_bindgen(js_name = "palletDocs")]
-    pub fn pallet_docs(&self, pallet_name: &str) -> JsValue {
+    pub fn pallet_docs(&self, pallet_name: &str) -> MyJsValue {
         let metadata = self.metadata();
-        let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
-            return JsValue::UNDEFINED;
-        };
-        serde_wasm_bindgen::to_value(pallet_metadata.docs()).expect("should always work")
+        let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
+        serde_wasm_bindgen::to_value(pallet_metadata.docs())
+            .expect("should always work")
+            .into()
     }
 
     #[wasm_bindgen(js_name = "palletContent")]
-    pub fn pallet_content(&self, pallet_name: &str) -> JsValue {
+    pub fn pallet_content(&self, pallet_name: &str) -> MyJsValue {
         let metadata = self.metadata();
-        let Some(pallet_metadata) = metadata.pallet_by_name(pallet_name) else {
-            console_log!("pallet {pallet_name} not found in metadata");
-            return JsValue::UNDEFINED;
-        };
+        let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
         let pallet_content = PalletContent::from_pallet_metadata(pallet_metadata);
         console_log!("pallet {pallet_name} found, content: {pallet_content:?}");
-        serde_wasm_bindgen::to_value(&pallet_content).expect("should always work")
+        serde_wasm_bindgen::to_value(&pallet_content)
+            .expect("should always work")
+            .into()
     }
 
     #[wasm_bindgen(js_name = "callContent")]
@@ -299,6 +298,72 @@ impl Client {
             .into()
     }
 
+    #[wasm_bindgen(js_name = "runtimeApiTraitDocs")]
+    pub fn runtime_api_trait_docs(&self, runtime_api_trait_name: &str) -> MyJsValue {
+        let metadata = self.metadata();
+        let runtime_api = metadata.runtime_api_trait_by_name(runtime_api_trait_name)?;
+        serde_wasm_bindgen::to_value(runtime_api.docs())
+            .expect("should always work")
+            .into()
+    }
+    #[wasm_bindgen(js_name = "runtimeApiTraitContent")]
+    pub fn runtime_api_trait_content(&self, runtime_api_trait_name: &str) -> MyJsValue {
+        let metadata = self.metadata();
+        let runtime_api = metadata.runtime_api_trait_by_name(runtime_api_trait_name)?;
+
+        let content = RuntimeApiTraitContent::from_metadata(runtime_api);
+        serde_wasm_bindgen::to_value(&content)
+            .expect("should always work")
+            .into()
+    }
+
+    #[wasm_bindgen(js_name = "runtimeApiMethodContent")]
+    pub fn runtime_api_method_content(
+        &self,
+        runtime_api_trait_name: &str,
+        method_name: &str,
+    ) -> MyJsValue {
+        let metadata = self.metadata();
+        let runtime_api = metadata.runtime_api_trait_by_name(runtime_api_trait_name)?;
+        let method = runtime_api.method_by_name(method_name)?;
+
+        let input_types = method
+            .inputs()
+            .map(|e| {
+                self.resolve_type_path(e.ty).map(|type_path| NameAndType {
+                    name: &e.name,
+                    type_path,
+                })
+            })
+            .collect::<Option<Vec<NameAndType>>>()?;
+
+        let value_type = self.resolve_type_path(method.output_ty())?;
+
+        // static code example
+        let code_example_static = self
+            .example_gen_static
+            .runtime_api_example_wrapped(runtime_api_trait_name, method_name)?;
+
+        // dynamic code example
+        let code_example_dynamic = self
+            .example_gen_dynamic
+            .runtime_api_example_wrapped(runtime_api_trait_name, method_name)?;
+
+        let content = RuntimeApiMethodContent {
+            runtime_api_trait_name,
+            method_name,
+            docs: method.docs(),
+            code_example_static: &format_code(&code_example_static.to_string()),
+            code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
+            input_types: &input_types,
+            value_type: &value_type,
+        };
+
+        serde_wasm_bindgen::to_value(&content)
+            .expect("should always work")
+            .into()
+    }
+
     /// Dynamically fetches the value of a keyless storage entry.
     /// Only works if this is an online client.
     #[wasm_bindgen(js_name = "fetchKeylessStorageValue")]
@@ -371,7 +436,7 @@ impl wasm_bindgen::convert::IntoWasmAbi for MyJsValue {
 #[derive(Serialize)]
 pub struct MetadataContent<'a> {
     pallets: Vec<PalletContent<'a>>,
-    runtime_apis: Vec<&'a str>,
+    runtime_apis: Vec<RuntimeApiTraitContent<'a>>,
     // note: String here, because I had lifetime issues otherwise
     custom_values: Vec<String>,
 }
@@ -383,7 +448,10 @@ impl<'a> MetadataContent<'a> {
             .map(|p| PalletContent::from_pallet_metadata(p))
             .collect();
 
-        let runtime_apis: Vec<&str> = metadata.runtime_api_traits().map(|e| e.name()).collect();
+        let runtime_apis: Vec<RuntimeApiTraitContent> = metadata
+            .runtime_api_traits()
+            .map(|e| RuntimeApiTraitContent::from_metadata(e))
+            .collect();
         let custom_values: Vec<String> = metadata
             .custom()
             .iter()
@@ -430,6 +498,22 @@ impl<'a> PalletContent<'a> {
     }
 }
 
+#[derive(Serialize, Debug)]
+pub struct RuntimeApiTraitContent<'a> {
+    pub name: &'a str,
+    pub methods: Vec<&'a str>,
+}
+
+impl<'a> RuntimeApiTraitContent<'a> {
+    pub fn from_metadata(metadata: RuntimeApiMetadata<'a>) -> RuntimeApiTraitContent<'a> {
+        let methods: Vec<&str> = metadata.methods().map(|e| e.name()).collect();
+        RuntimeApiTraitContent {
+            name: metadata.name(),
+            methods,
+        }
+    }
+}
+
 /// Represents all the information about a call that we want to show to a user.
 #[derive(Serialize)]
 pub struct CallContent<'a> {
@@ -462,4 +546,22 @@ pub struct ConstantContent<'a> {
     pub code_example_dynamic: &'a str,
     pub value: &'a str,
     pub value_type: &'a str,
+}
+
+#[derive(Serialize)]
+pub struct RuntimeApiMethodContent<'a> {
+    pub runtime_api_trait_name: &'a str,
+    pub method_name: &'a str,
+    pub docs: &'a [String],
+    pub code_example_static: &'a str,
+    pub code_example_dynamic: &'a str,
+    pub input_types: &'a [NameAndType<'a>],
+    pub value_type: &'a str,
+}
+
+#[derive(Serialize)]
+pub struct NameAndType<'a> {
+    pub name: &'a str,
+    // just out of convenience a String. Should not matter too much
+    pub type_path: String,
 }
