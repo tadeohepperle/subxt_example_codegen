@@ -9,7 +9,7 @@ use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
 use subxt_metadata::{Metadata, PalletMetadata, RuntimeApiMetadata};
 use wasm_bindgen::{convert::IntoWasmAbi, prelude::*};
 
-use crate::{context::ExampleContext, storage_entry_key_ty_ids, ExampleGenerator};
+use crate::{context::ExampleContext, storage_entry_key_ty_ids, ExampleGenerator, PruneTypePath};
 
 macro_rules! console_log {
     // Note that this is using the `log` function imported above during
@@ -119,11 +119,8 @@ impl Client {
     fn resolve_type_path(&self, type_id: u32) -> Option<String> {
         let type_gen = self.example_gen_static.type_gen();
         type_gen.types().resolve(type_id)?;
-        let type_path_string = type_gen
-            .resolve_type_path(type_id)
-            .to_token_stream()
-            .to_string();
-        Some(type_path_string)
+        let type_path_string = type_gen.resolve_type_path(type_id).prune().to_string();
+        Some(format_code(&type_path_string))
     }
 }
 

@@ -631,7 +631,7 @@ fn variable_names_and_declarations(
     Ok((variable_names, variable_declarations))
 }
 
-trait PruneTypePath {
+pub trait PruneTypePath {
     fn prune(&self) -> TokenStream;
 }
 

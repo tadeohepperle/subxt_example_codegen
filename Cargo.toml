@@ -7,7 +7,7 @@ edition = "2021"
 
 
 [features]
-default = ["native"]
+default = ["web"]
 
 native = ["subxt/native"]
 
