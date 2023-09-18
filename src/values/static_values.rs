@@ -37,6 +37,9 @@ fn type_def_example(
         ty.path.segments.last().map_or(false, |e| e == s)
     }
 
+    //
+    // WARNING: HACKY CUSTOM LOGIC
+    //
     // cannot use normal construction for `subxt::utils::UncheckedExtrinsic`, because phantom data is private.
     if last_path_segment(ty, "UncheckedExtrinsic") {
         return Ok(quote!(subxt::utils::UncheckedExtrinsic::new(vec![
@@ -44,6 +47,9 @@ fn type_def_example(
         ])));
     }
 
+    //
+    // WARNING: HACKY CUSTOM LOGIC
+    //
     // BtreeMaps are replaced by KeyedVec = Vec<K,V>, causes problems because the type alias is seen as a 1 element typle struct -> wrong example generation
     if last_path_segment(ty, "BTreeMap") {
         let key_ty = ty
@@ -62,6 +68,14 @@ fn type_def_example(
         let key_example = type_example(key_ty.id, type_gen)?;
         let value_example = type_example(value_ty.id, type_gen)?;
         return Ok(quote!(vec![(#key_example, #value_example)]));
+    }
+
+    //
+    // WARNING: HACKY CUSTOM LOGIC
+    //
+    // just makes it nicer to see AccountId examples in the generated code
+    if last_path_segment(ty, "AccountId32") {
+        return Ok(quote!(dev::bob().public_key().into()));
     }
 
     // general handling of type definitions
@@ -90,6 +104,11 @@ fn type_def_example(
             // So for now, we set it to false.
             let fields = fields_example(type_gen, &first_variant.fields, false)?;
             let mut example = quote!(#enum_path::#variant_ident #fields);
+
+            //
+            // WARNING: HACKY CUSTOM LOGIC
+            //
+            // Note: this makes it such that Option::None is just shown as None.
             if example.to_string() == "Option :: None" {
                 example = quote!(None);
             };

@@ -31,7 +31,7 @@ use std::{borrow::Cow, fmt::Display};
 use anyhow::{anyhow, Ok};
 use context::{ExampleContext, FileOrUrl};
 use heck::ToSnakeCase;
-use proc_macro2::{Ident, Punct, TokenStream, TokenTree};
+use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens};
 use scale_info::{form::PortableForm, TypeDef, Variant};
 use subxt_codegen::{DerivesRegistry, TypeGenerator, TypeSubstitutes};
@@ -633,10 +633,16 @@ trait PruneTypePath {
 
 impl<T: ToTokens> PruneTypePath for T {
     fn prune(&self) -> TokenStream {
+        let e: subxt::utils::AccountId32 = subxt_signer::ecdsa::dev::bob().public_key().into();
+
+        //
+        // WARNING: HACKY CUSTOM LOGIC
+        //
         const PATH_SEGMENTS_REPLACEMENTS: &[(&'static str, &'static str)] = &[
             ("::std::vec::Vec", "Vec"),
             ("::core::option::Option", "Option"),
             ("::core::primitive::", ""),
+            ("::subxt", "subxt"),
         ];
 
         let mut s = self.to_token_stream().to_string();

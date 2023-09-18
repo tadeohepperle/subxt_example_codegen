@@ -99,8 +99,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let dest: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let value: u128 = 128;
     let payload = runtime::tx().balances().transfer_allow_death(dest, value);
@@ -112,8 +112,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let who: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let new_free: u128 = 128;
     let old_reserved: u128 = 128;
@@ -128,11 +128,11 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let source: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let source: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let dest: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let value: u128 = 128;
     let payload = runtime::tx().balances().force_transfer(source, dest, value);
@@ -144,8 +144,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let dest: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let value: u128 = 128;
     let payload = runtime::tx().balances().transfer_keep_alive(dest, value);
@@ -157,8 +157,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let dest: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let keep_alive: bool = false;
     let payload = runtime::tx().balances().transfer_all(dest, keep_alive);
@@ -170,8 +170,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let who: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let amount: u128 = 128;
     let payload = runtime::tx().balances().force_unreserve(who, amount);
@@ -183,9 +183,9 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let who: Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],), ::subxt::utils::AccountId32([8; 32usize],)
+    let who: Vec<subxt::utils::AccountId32> = vec![
+        dev::bob().public_key().into(), dev::bob().public_key().into(), dev::bob()
+        .public_key().into()
     ];
     let payload = runtime::tx().balances().upgrade_accounts(who);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -196,8 +196,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let dest: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let dest: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let value: u128 = 128;
     let payload = runtime::tx().balances().transfer(dest, value);
@@ -209,8 +209,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let who: ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()> = ::subxt::utils::MultiAddress::Id(
-        ::subxt::utils::AccountId32([8; 32usize]),
+    let who: subxt::utils::MultiAddress<subxt::utils::AccountId32, ()> = subxt::utils::MultiAddress::Id(
+        dev::bob().public_key().into(),
     );
     let new_free: u128 = 128;
     let payload = runtime::tx().balances().force_set_balance(who, new_free);
@@ -224,7 +224,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     let value: u128 = 128;
     let payee: runtime_types::pallet_staking::RewardDestination<
-        ::subxt::utils::AccountId32,
+        subxt::utils::AccountId32,
     > = runtime_types::pallet_staking::RewardDestination::Staked;
     let payload = runtime::tx().staking().bond(value, payee);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -278,10 +278,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let targets: Vec<::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>> = vec![
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),),
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),),
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),)
+    let targets: Vec<subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>> = vec![
+        subxt::utils::MultiAddress::Id(dev::bob().public_key().into(),),
+        subxt::utils::MultiAddress::Id(dev::bob().public_key().into(),),
+        subxt::utils::MultiAddress::Id(dev::bob().public_key().into(),)
     ];
     let payload = runtime::tx().staking().nominate(targets);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -302,7 +302,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .wait_for_finalized_success()
         .await?;
     let payee: runtime_types::pallet_staking::RewardDestination<
-        ::subxt::utils::AccountId32,
+        subxt::utils::AccountId32,
     > = runtime_types::pallet_staking::RewardDestination::Staked;
     let payload = runtime::tx().staking().set_payee(payee);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -372,9 +372,9 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let invulnerables: Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],), ::subxt::utils::AccountId32([8; 32usize],)
+    let invulnerables: Vec<subxt::utils::AccountId32> = vec![
+        dev::bob().public_key().into(), dev::bob().public_key().into(), dev::bob()
+        .public_key().into()
     ];
     let payload = runtime::tx().staking().set_invulnerables(invulnerables);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -385,7 +385,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let stash: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let num_slashing_spans: u32 = 32;
     let payload = runtime::tx().staking().force_unstake(stash, num_slashing_spans);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -416,9 +416,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let validator_stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32(
-        [8; 32usize],
-    );
+    let validator_stash: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let era: u32 = 32;
     let payload = runtime::tx().staking().payout_stakers(validator_stash, era);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -439,7 +437,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let stash: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let num_slashing_spans: u32 = 32;
     let payload = runtime::tx().staking().reap_stash(stash, num_slashing_spans);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -450,10 +448,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let who: Vec<::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>> = vec![
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),),
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),),
-        ::subxt::utils::MultiAddress::Id(::subxt::utils::AccountId32([8; 32usize],),)
+    let who: Vec<subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>> = vec![
+        subxt::utils::MultiAddress::Id(dev::bob().public_key().into(),),
+        subxt::utils::MultiAddress::Id(dev::bob().public_key().into(),),
+        subxt::utils::MultiAddress::Id(dev::bob().public_key().into(),)
     ];
     let payload = runtime::tx().staking().kick(who);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -500,9 +498,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let controller: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32(
-        [8; 32usize],
-    );
+    let controller: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let payload = runtime::tx().staking().chill_other(controller);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let from = dev::alice();
@@ -512,9 +508,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let validator_stash: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32(
-        [8; 32usize],
-    );
+    let validator_stash: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let payload = runtime::tx().staking().force_apply_min_commission(validator_stash);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let from = dev::alice();
@@ -536,9 +530,9 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let other_signatories: Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],), ::subxt::utils::AccountId32([8; 32usize],)
+    let other_signatories: Vec<subxt::utils::AccountId32> = vec![
+        dev::bob().public_key().into(), dev::bob().public_key().into(), dev::bob()
+        .public_key().into()
     ];
     let call: bool = false;
     let payload = runtime::tx().multisig().as_multi_threshold_1(other_signatories, call);
@@ -551,9 +545,9 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .wait_for_finalized_success()
         .await?;
     let threshold: u16 = 16;
-    let other_signatories: Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],), ::subxt::utils::AccountId32([8; 32usize],)
+    let other_signatories: Vec<subxt::utils::AccountId32> = vec![
+        dev::bob().public_key().into(), dev::bob().public_key().into(), dev::bob()
+        .public_key().into()
     ];
     let maybe_timepoint: Option<runtime_types::pallet_multisig::Timepoint<u32>> = None;
     let call: bool = false;
@@ -573,9 +567,9 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .wait_for_finalized_success()
         .await?;
     let threshold: u16 = 16;
-    let other_signatories: Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],), ::subxt::utils::AccountId32([8; 32usize],)
+    let other_signatories: Vec<subxt::utils::AccountId32> = vec![
+        dev::bob().public_key().into(), dev::bob().public_key().into(), dev::bob()
+        .public_key().into()
     ];
     let maybe_timepoint: Option<runtime_types::pallet_multisig::Timepoint<u32>> = None;
     let call_hash: [u8; 32usize] = [8; 32usize];
@@ -601,9 +595,9 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .wait_for_finalized_success()
         .await?;
     let threshold: u16 = 16;
-    let other_signatories: Vec<::subxt::utils::AccountId32> = vec![
-        ::subxt::utils::AccountId32([8; 32usize],), ::subxt::utils::AccountId32([8;
-        32usize],), ::subxt::utils::AccountId32([8; 32usize],)
+    let other_signatories: Vec<subxt::utils::AccountId32> = vec![
+        dev::bob().public_key().into(), dev::bob().public_key().into(), dev::bob()
+        .public_key().into()
     ];
     let timepoint: runtime_types::pallet_multisig::Timepoint<u32> = runtime_types::pallet_multisig::Timepoint {
         height: 32,
@@ -652,15 +646,15 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             runtime_types::polkadot_primitives::v5::CommittedCandidateReceipt {
             descriptor : runtime_types::polkadot_primitives::v5::CandidateDescriptor {
             para_id : runtime_types::polkadot_parachain::primitives::Id(32,),
-            relay_parent : ::subxt::utils::H256([8; 32usize],), collator :
+            relay_parent : subxt::utils::H256([8; 32usize],), collator :
             runtime_types::polkadot_primitives::v5::collator_app::Public(runtime_types::sp_core::sr25519::Public([8;
-            32usize],),), persisted_validation_data_hash : ::subxt::utils::H256([8;
-            32usize],), pov_hash : ::subxt::utils::H256([8; 32usize],), erasure_root :
-            ::subxt::utils::H256([8; 32usize],), signature :
+            32usize],),), persisted_validation_data_hash : subxt::utils::H256([8;
+            32usize],), pov_hash : subxt::utils::H256([8; 32usize],), erasure_root :
+            subxt::utils::H256([8; 32usize],), signature :
             runtime_types::polkadot_primitives::v5::collator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),), para_head : ::subxt::utils::H256([8; 32usize],),
+            64usize],),), para_head : subxt::utils::H256([8; 32usize],),
             validation_code_hash :
-            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(::subxt::utils::H256([8;
+            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(subxt::utils::H256([8;
             32usize],),), }, commitments :
             runtime_types::polkadot_primitives::v5::CandidateCommitments {
             upward_messages :
@@ -687,15 +681,15 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             runtime_types::polkadot_primitives::v5::CommittedCandidateReceipt {
             descriptor : runtime_types::polkadot_primitives::v5::CandidateDescriptor {
             para_id : runtime_types::polkadot_parachain::primitives::Id(32,),
-            relay_parent : ::subxt::utils::H256([8; 32usize],), collator :
+            relay_parent : subxt::utils::H256([8; 32usize],), collator :
             runtime_types::polkadot_primitives::v5::collator_app::Public(runtime_types::sp_core::sr25519::Public([8;
-            32usize],),), persisted_validation_data_hash : ::subxt::utils::H256([8;
-            32usize],), pov_hash : ::subxt::utils::H256([8; 32usize],), erasure_root :
-            ::subxt::utils::H256([8; 32usize],), signature :
+            32usize],),), persisted_validation_data_hash : subxt::utils::H256([8;
+            32usize],), pov_hash : subxt::utils::H256([8; 32usize],), erasure_root :
+            subxt::utils::H256([8; 32usize],), signature :
             runtime_types::polkadot_primitives::v5::collator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),), para_head : ::subxt::utils::H256([8; 32usize],),
+            64usize],),), para_head : subxt::utils::H256([8; 32usize],),
             validation_code_hash :
-            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(::subxt::utils::H256([8;
+            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(subxt::utils::H256([8;
             32usize],),), }, commitments :
             runtime_types::polkadot_primitives::v5::CandidateCommitments {
             upward_messages :
@@ -722,15 +716,15 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             runtime_types::polkadot_primitives::v5::CommittedCandidateReceipt {
             descriptor : runtime_types::polkadot_primitives::v5::CandidateDescriptor {
             para_id : runtime_types::polkadot_parachain::primitives::Id(32,),
-            relay_parent : ::subxt::utils::H256([8; 32usize],), collator :
+            relay_parent : subxt::utils::H256([8; 32usize],), collator :
             runtime_types::polkadot_primitives::v5::collator_app::Public(runtime_types::sp_core::sr25519::Public([8;
-            32usize],),), persisted_validation_data_hash : ::subxt::utils::H256([8;
-            32usize],), pov_hash : ::subxt::utils::H256([8; 32usize],), erasure_root :
-            ::subxt::utils::H256([8; 32usize],), signature :
+            32usize],),), persisted_validation_data_hash : subxt::utils::H256([8;
+            32usize],), pov_hash : subxt::utils::H256([8; 32usize],), erasure_root :
+            subxt::utils::H256([8; 32usize],), signature :
             runtime_types::polkadot_primitives::v5::collator_app::Signature(runtime_types::sp_core::sr25519::Signature([8;
-            64usize],),), para_head : ::subxt::utils::H256([8; 32usize],),
+            64usize],),), para_head : subxt::utils::H256([8; 32usize],),
             validation_code_hash :
-            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(::subxt::utils::H256([8;
+            runtime_types::polkadot_parachain::primitives::ValidationCodeHash(subxt::utils::H256([8;
             32usize],),), }, commitments :
             runtime_types::polkadot_primitives::v5::CandidateCommitments {
             upward_messages :
@@ -757,7 +751,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         disputes: vec![
             runtime_types::polkadot_primitives::v5::DisputeStatementSet { candidate_hash
             :
-            runtime_types::polkadot_core_primitives::CandidateHash(::subxt::utils::H256([8;
+            runtime_types::polkadot_core_primitives::CandidateHash(subxt::utils::H256([8;
             32usize],),), session : 32, statements :
             vec![(runtime_types::polkadot_primitives::v5::DisputeStatement::Valid(runtime_types::polkadot_primitives::v5::ValidDisputeStatementKind::Explicit,),
             runtime_types::polkadot_primitives::v5::ValidatorIndex(32,),
@@ -773,7 +767,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             64usize],),))], },
             runtime_types::polkadot_primitives::v5::DisputeStatementSet { candidate_hash
             :
-            runtime_types::polkadot_core_primitives::CandidateHash(::subxt::utils::H256([8;
+            runtime_types::polkadot_core_primitives::CandidateHash(subxt::utils::H256([8;
             32usize],),), session : 32, statements :
             vec![(runtime_types::polkadot_primitives::v5::DisputeStatement::Valid(runtime_types::polkadot_primitives::v5::ValidDisputeStatementKind::Explicit,),
             runtime_types::polkadot_primitives::v5::ValidatorIndex(32,),
@@ -789,7 +783,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             64usize],),))], },
             runtime_types::polkadot_primitives::v5::DisputeStatementSet { candidate_hash
             :
-            runtime_types::polkadot_core_primitives::CandidateHash(::subxt::utils::H256([8;
+            runtime_types::polkadot_core_primitives::CandidateHash(subxt::utils::H256([8;
             32usize],),), session : 32, statements :
             vec![(runtime_types::polkadot_primitives::v5::DisputeStatement::Valid(runtime_types::polkadot_primitives::v5::ValidDisputeStatementKind::Explicit,),
             runtime_types::polkadot_primitives::v5::ValidatorIndex(32,),
@@ -805,10 +799,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             64usize],),))], }
         ],
         parent_header: runtime_types::sp_runtime::generic::header::Header {
-            parent_hash: ::subxt::utils::H256([8; 32usize]),
+            parent_hash: subxt::utils::H256([8; 32usize]),
             number: 32,
-            state_root: ::subxt::utils::H256([8; 32usize]),
-            extrinsics_root: ::subxt::utils::H256([8; 32usize]),
+            state_root: subxt::utils::H256([8; 32usize]),
+            extrinsics_root: subxt::utils::H256([8; 32usize]),
             digest: runtime_types::sp_runtime::generic::digest::Digest {
                 logs: vec![
                     runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
@@ -831,7 +825,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .wait_for_finalized_success()
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().system().account(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
@@ -866,7 +860,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let key_0: u32 = 32;
     let storage_query = runtime::storage().system().block_hash(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::subxt::utils::H256> = api
+    let result: Option<subxt::utils::H256> = api
         .storage()
         .at_latest()
         .await?
@@ -891,7 +885,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     let storage_query = runtime::storage().system().parent_hash();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::subxt::utils::H256> = api
+    let result: Option<subxt::utils::H256> = api
         .storage()
         .at_latest()
         .await?
@@ -911,7 +905,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         Vec<
             runtime_types::frame_system::EventRecord<
                 runtime_types::polkadot_runtime::RuntimeEvent,
-                ::subxt::utils::H256,
+                subxt::utils::H256,
             >,
         >,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
@@ -923,7 +917,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::H256 = ::subxt::utils::H256([8; 32usize]);
+    let key_0: subxt::utils::H256 = subxt::utils::H256([8; 32usize]);
     let storage_query = runtime::storage().system().event_topics(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<Vec<(u32, u32)>> = api
@@ -996,7 +990,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().balances().account(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<runtime_types::pallet_balances::types::AccountData<u128>> = api
@@ -1005,7 +999,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().balances().locks(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
@@ -1013,7 +1007,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             runtime_types::pallet_balances::types::BalanceLock<u128>,
         >,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().balances().reserves(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
@@ -1021,7 +1015,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             runtime_types::pallet_balances::types::ReserveData<[u8; 8usize], u128>,
         >,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().balances().holds(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
@@ -1032,7 +1026,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             >,
         >,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().balances().freezes(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
@@ -1058,16 +1052,16 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     let storage_query = runtime::storage().staking().invulnerables();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<Vec<::subxt::utils::AccountId32>> = api
+    let result: Option<Vec<subxt::utils::AccountId32>> = api
         .storage()
         .at_latest()
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().bonded(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: Option<::subxt::utils::AccountId32> = api
+    let result: Option<subxt::utils::AccountId32> = api
         .storage()
         .at_latest()
         .await?
@@ -1105,7 +1099,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().ledger(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<runtime_types::pallet_staking::StakingLedger> = api
@@ -1114,13 +1108,13 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().payee(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
-        runtime_types::pallet_staking::RewardDestination<::subxt::utils::AccountId32>,
+        runtime_types::pallet_staking::RewardDestination<subxt::utils::AccountId32>,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().validators(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<runtime_types::pallet_staking::ValidatorPrefs> = api
@@ -1145,7 +1139,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().nominators(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<runtime_types::pallet_staking::Nominations> = api
@@ -1196,21 +1190,21 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .fetch(&storage_query)
         .await?;
     let key_0: u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_1: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().eras_stakers(key_0, key_1);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
-        runtime_types::pallet_staking::Exposure<::subxt::utils::AccountId32, u128>,
+        runtime_types::pallet_staking::Exposure<subxt::utils::AccountId32, u128>,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
     let key_0: u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_1: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().eras_stakers_clipped(key_0, key_1);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
-        runtime_types::pallet_staking::Exposure<::subxt::utils::AccountId32, u128>,
+        runtime_types::pallet_staking::Exposure<subxt::utils::AccountId32, u128>,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
     let key_0: u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_1: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().eras_validator_prefs(key_0, key_1);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<runtime_types::pallet_staking::ValidatorPrefs> = api
@@ -1232,7 +1226,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let storage_query = runtime::storage().staking().eras_reward_points(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
-        runtime_types::pallet_staking::EraRewardPoints<::subxt::utils::AccountId32>,
+        runtime_types::pallet_staking::EraRewardPoints<subxt::utils::AccountId32>,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
     let key_0: u32 = 32;
     let storage_query = runtime::storage().staking().eras_total_stake(key_0);
@@ -1273,7 +1267,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let result: Option<
         Vec<
             runtime_types::pallet_staking::UnappliedSlash<
-                ::subxt::utils::AccountId32,
+                subxt::utils::AccountId32,
                 u128,
             >,
         >,
@@ -1287,7 +1281,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .fetch(&storage_query)
         .await?;
     let key_0: u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_1: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage()
         .staking()
         .validator_slash_in_era(key_0, key_1);
@@ -1299,7 +1293,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .fetch(&storage_query)
         .await?;
     let key_0: u32 = 32;
-    let key_1: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_1: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage()
         .staking()
         .nominator_slash_in_era(key_0, key_1);
@@ -1310,7 +1304,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let storage_query = runtime::storage().staking().slashing_spans(key_0);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<runtime_types::pallet_staking::slashing::SlashingSpans> = api
@@ -1319,7 +1313,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let key_1: u32 = 32;
     let storage_query = runtime::storage().staking().span_slash(key_0, key_1);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -1353,12 +1347,12 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .fetch(&storage_query)
         .await?;
-    let key_0: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let key_0: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let key_1: [u8; 32usize] = [8; 32usize];
     let storage_query = runtime::storage().multisig().multisigs(key_0, key_1);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
-        runtime_types::pallet_multisig::Multisig<u32, u128, ::subxt::utils::AccountId32>,
+        runtime_types::pallet_multisig::Multisig<u32, u128, subxt::utils::AccountId32>,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
     let storage_query = runtime::storage().para_inherent().included();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -1371,7 +1365,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let storage_query = runtime::storage().para_inherent().on_chain_votes();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
-        runtime_types::polkadot_primitives::v5::ScrapedOnChainVotes<::subxt::utils::H256>,
+        runtime_types::polkadot_primitives::v5::ScrapedOnChainVotes<subxt::utils::H256>,
     > = api.storage().at_latest().await?.fetch(&storage_query).await?;
     let constant_query = runtime::constants().system().block_weights();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -1462,8 +1456,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             u32,
             runtime_types::sp_runtime::traits::BlakeTwo256,
         >,
-        ::subxt::utils::UncheckedExtrinsic<
-            ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
+        subxt::utils::UncheckedExtrinsic<
+            subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>,
             runtime_types::polkadot_runtime::RuntimeCall,
             runtime_types::sp_runtime::MultiSignature,
             (
@@ -1480,10 +1474,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         >,
     > = runtime_types::sp_runtime::generic::block::Block {
         header: runtime_types::sp_runtime::generic::header::Header {
-            parent_hash: ::subxt::utils::H256([8; 32usize]),
+            parent_hash: subxt::utils::H256([8; 32usize]),
             number: 32,
-            state_root: ::subxt::utils::H256([8; 32usize]),
-            extrinsics_root: ::subxt::utils::H256([8; 32usize]),
+            state_root: subxt::utils::H256([8; 32usize]),
+            extrinsics_root: subxt::utils::H256([8; 32usize]),
             digest: runtime_types::sp_runtime::generic::digest::Digest {
                 logs: vec![
                     runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
@@ -1509,10 +1503,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         u32,
         runtime_types::sp_runtime::traits::BlakeTwo256,
     > = runtime_types::sp_runtime::generic::header::Header {
-        parent_hash: ::subxt::utils::H256([8; 32usize]),
+        parent_hash: subxt::utils::H256([8; 32usize]),
         number: 32,
-        state_root: ::subxt::utils::H256([8; 32usize]),
-        extrinsics_root: ::subxt::utils::H256([8; 32usize]),
+        state_root: subxt::utils::H256([8; 32usize]),
+        extrinsics_root: subxt::utils::H256([8; 32usize]),
         digest: runtime_types::sp_runtime::generic::digest::Digest {
             logs: vec![
                 runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
@@ -1553,8 +1547,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .call(runtime_api_call)
         .await?;
-    let extrinsic: ::subxt::utils::UncheckedExtrinsic<
-        ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
+    let extrinsic: subxt::utils::UncheckedExtrinsic<
+        subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>,
         runtime_types::polkadot_runtime::RuntimeCall,
         runtime_types::sp_runtime::MultiSignature,
         (
@@ -1587,8 +1581,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let runtime_api_call = runtime::apis().block_builder().inherent_extrinsics(inherent);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Vec<
-        ::subxt::utils::UncheckedExtrinsic<
-            ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
+        subxt::utils::UncheckedExtrinsic<
+            subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>,
             runtime_types::polkadot_runtime::RuntimeCall,
             runtime_types::sp_runtime::MultiSignature,
             (
@@ -1609,8 +1603,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             u32,
             runtime_types::sp_runtime::traits::BlakeTwo256,
         >,
-        ::subxt::utils::UncheckedExtrinsic<
-            ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
+        subxt::utils::UncheckedExtrinsic<
+            subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>,
             runtime_types::polkadot_runtime::RuntimeCall,
             runtime_types::sp_runtime::MultiSignature,
             (
@@ -1627,10 +1621,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         >,
     > = runtime_types::sp_runtime::generic::block::Block {
         header: runtime_types::sp_runtime::generic::header::Header {
-            parent_hash: ::subxt::utils::H256([8; 32usize]),
+            parent_hash: subxt::utils::H256([8; 32usize]),
             number: 32,
-            state_root: ::subxt::utils::H256([8; 32usize]),
-            extrinsics_root: ::subxt::utils::H256([8; 32usize]),
+            state_root: subxt::utils::H256([8; 32usize]),
+            extrinsics_root: subxt::utils::H256([8; 32usize]),
             digest: runtime_types::sp_runtime::generic::digest::Digest {
                 logs: vec![
                     runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
@@ -1660,7 +1654,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .call(runtime_api_call)
         .await?;
-    let who: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let who: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let runtime_api_call = runtime::apis().nomination_pools_api().pending_rewards(who);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: u128 = api
@@ -1698,8 +1692,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: u32 = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let source: runtime_types::sp_runtime::transaction_validity::TransactionSource = runtime_types::sp_runtime::transaction_validity::TransactionSource::InBlock;
-    let tx: ::subxt::utils::UncheckedExtrinsic<
-        ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
+    let tx: subxt::utils::UncheckedExtrinsic<
+        subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>,
         runtime_types::polkadot_runtime::RuntimeCall,
         runtime_types::sp_runtime::MultiSignature,
         (
@@ -1714,7 +1708,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             runtime_types::polkadot_runtime_common::claims::PrevalidateAttests,
         ),
     > = subxt::utils::UncheckedExtrinsic::new(vec![1, 2, 3, 4]);
-    let block_hash: ::subxt::utils::H256 = ::subxt::utils::H256([8; 32usize]);
+    let block_hash: subxt::utils::H256 = subxt::utils::H256([8; 32usize]);
     let runtime_api_call = runtime::apis()
         .tagged_transaction_queue()
         .validate_transaction(source, tx, block_hash);
@@ -1727,10 +1721,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         u32,
         runtime_types::sp_runtime::traits::BlakeTwo256,
     > = runtime_types::sp_runtime::generic::header::Header {
-        parent_hash: ::subxt::utils::H256([8; 32usize]),
+        parent_hash: subxt::utils::H256([8; 32usize]),
         number: 32,
-        state_root: ::subxt::utils::H256([8; 32usize]),
-        extrinsics_root: ::subxt::utils::H256([8; 32usize]),
+        state_root: subxt::utils::H256([8; 32usize]),
+        extrinsics_root: subxt::utils::H256([8; 32usize]),
         digest: runtime_types::sp_runtime::generic::digest::Digest {
             logs: vec![
                 runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
@@ -1763,7 +1757,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let runtime_api_call = runtime::apis().parachain_host().availability_cores();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Vec<
-        runtime_types::polkadot_primitives::v5::CoreState<::subxt::utils::H256, u32>,
+        runtime_types::polkadot_primitives::v5::CoreState<subxt::utils::H256, u32>,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let para_id: runtime_types::polkadot_parachain::primitives::Id = runtime_types::polkadot_parachain::primitives::Id(
         32,
@@ -1775,14 +1769,14 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
         runtime_types::polkadot_primitives::v5::PersistedValidationData<
-            ::subxt::utils::H256,
+            subxt::utils::H256,
             u32,
         >,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let para_id: runtime_types::polkadot_parachain::primitives::Id = runtime_types::polkadot_parachain::primitives::Id(
         32,
     );
-    let expected_persisted_validation_data_hash: ::subxt::utils::H256 = ::subxt::utils::H256(
+    let expected_persisted_validation_data_hash: subxt::utils::H256 = subxt::utils::H256(
         [8; 32usize],
     );
     let runtime_api_call = runtime::apis()
@@ -1792,7 +1786,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let result: Option<
         (
             runtime_types::polkadot_primitives::v5::PersistedValidationData<
-                ::subxt::utils::H256,
+                subxt::utils::H256,
                 u32,
             >,
             runtime_types::polkadot_parachain::primitives::ValidationCodeHash,
@@ -1860,13 +1854,13 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
         runtime_types::polkadot_primitives::v5::CommittedCandidateReceipt<
-            ::subxt::utils::H256,
+            subxt::utils::H256,
         >,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let runtime_api_call = runtime::apis().parachain_host().candidate_events();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Vec<
-        runtime_types::polkadot_primitives::v5::CandidateEvent<::subxt::utils::H256>,
+        runtime_types::polkadot_primitives::v5::CandidateEvent<subxt::utils::H256>,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let recipient: runtime_types::polkadot_parachain::primitives::Id = runtime_types::polkadot_parachain::primitives::Id(
         32,
@@ -1883,12 +1877,12 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .parachain_host()
         .inbound_hrmp_channels_contents(recipient);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
-    let result: ::subxt::utils::KeyedVec<
+    let result: subxt::utils::KeyedVec<
         runtime_types::polkadot_parachain::primitives::Id,
         Vec<runtime_types::polkadot_core_primitives::InboundHrmpMessage<u32>>,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let hash: runtime_types::polkadot_parachain::primitives::ValidationCodeHash = runtime_types::polkadot_parachain::primitives::ValidationCodeHash(
-        ::subxt::utils::H256([8; 32usize]),
+        subxt::utils::H256([8; 32usize]),
     );
     let runtime_api_call = runtime::apis()
         .parachain_host()
@@ -1903,7 +1897,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let runtime_api_call = runtime::apis().parachain_host().on_chain_votes();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: Option<
-        runtime_types::polkadot_primitives::v5::ScrapedOnChainVotes<::subxt::utils::H256>,
+        runtime_types::polkadot_primitives::v5::ScrapedOnChainVotes<subxt::utils::H256>,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let index: u32 = 32;
     let runtime_api_call = runtime::apis().parachain_host().session_info(index);
@@ -1917,7 +1911,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let stmt: runtime_types::polkadot_primitives::v5::PvfCheckStatement = runtime_types::polkadot_primitives::v5::PvfCheckStatement {
         accept: false,
         subject: runtime_types::polkadot_parachain::primitives::ValidationCodeHash(
-            ::subxt::utils::H256([8; 32usize]),
+            subxt::utils::H256([8; 32usize]),
         ),
         session_index: 32,
         validator_index: runtime_types::polkadot_primitives::v5::ValidatorIndex(32),
@@ -1989,7 +1983,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         time_slot: runtime_types::polkadot_primitives::v5::slashing::DisputesTimeSlot {
             session_index: 32,
             candidate_hash: runtime_types::polkadot_core_primitives::CandidateHash(
-                ::subxt::utils::H256([8; 32usize]),
+                subxt::utils::H256([8; 32usize]),
             ),
         },
         kind: runtime_types::polkadot_primitives::v5::slashing::SlashingOffenceKind::ForInvalid,
@@ -2101,7 +2095,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let runtime_api_call = runtime::apis().mmr_api().mmr_root();
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: ::core::result::Result<
-        ::subxt::utils::H256,
+        subxt::utils::H256,
         runtime_types::sp_mmr_primitives::Error,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
     let runtime_api_call = runtime::apis().mmr_api().mmr_leaf_count();
@@ -2121,7 +2115,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
     let result: ::core::result::Result<
         (
             Vec<runtime_types::sp_mmr_primitives::EncodableOpaqueLeaf>,
-            runtime_types::sp_mmr_primitives::Proof<::subxt::utils::H256>,
+            runtime_types::sp_mmr_primitives::Proof<subxt::utils::H256>,
         ),
         runtime_types::sp_mmr_primitives::Error,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
@@ -2130,12 +2124,12 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         runtime_types::sp_mmr_primitives::EncodableOpaqueLeaf(vec![8, 8, 8],),
         runtime_types::sp_mmr_primitives::EncodableOpaqueLeaf(vec![8, 8, 8],)
     ];
-    let proof: runtime_types::sp_mmr_primitives::Proof<::subxt::utils::H256> = runtime_types::sp_mmr_primitives::Proof {
+    let proof: runtime_types::sp_mmr_primitives::Proof<subxt::utils::H256> = runtime_types::sp_mmr_primitives::Proof {
         leaf_indices: vec![64, 64, 64],
         leaf_count: 64,
         items: vec![
-            ::subxt::utils::H256([8; 32usize],), ::subxt::utils::H256([8; 32usize],),
-            ::subxt::utils::H256([8; 32usize],)
+            subxt::utils::H256([8; 32usize],), subxt::utils::H256([8; 32usize],),
+            subxt::utils::H256([8; 32usize],)
         ],
     };
     let runtime_api_call = runtime::apis().mmr_api().verify_proof(leaves, proof);
@@ -2146,18 +2140,18 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .call(runtime_api_call)
         .await?;
-    let root: ::subxt::utils::H256 = ::subxt::utils::H256([8; 32usize]);
+    let root: subxt::utils::H256 = subxt::utils::H256([8; 32usize]);
     let leaves: Vec<runtime_types::sp_mmr_primitives::EncodableOpaqueLeaf> = vec![
         runtime_types::sp_mmr_primitives::EncodableOpaqueLeaf(vec![8, 8, 8],),
         runtime_types::sp_mmr_primitives::EncodableOpaqueLeaf(vec![8, 8, 8],),
         runtime_types::sp_mmr_primitives::EncodableOpaqueLeaf(vec![8, 8, 8],)
     ];
-    let proof: runtime_types::sp_mmr_primitives::Proof<::subxt::utils::H256> = runtime_types::sp_mmr_primitives::Proof {
+    let proof: runtime_types::sp_mmr_primitives::Proof<subxt::utils::H256> = runtime_types::sp_mmr_primitives::Proof {
         leaf_indices: vec![64, 64, 64],
         leaf_count: 64,
         items: vec![
-            ::subxt::utils::H256([8; 32usize],), ::subxt::utils::H256([8; 32usize],),
-            ::subxt::utils::H256([8; 32usize],)
+            subxt::utils::H256([8; 32usize],), subxt::utils::H256([8; 32usize],),
+            subxt::utils::H256([8; 32usize],)
         ],
     };
     let runtime_api_call = runtime::apis()
@@ -2179,7 +2173,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .call(runtime_api_call)
         .await?;
     let equivocation_proof: runtime_types::sp_consensus_grandpa::EquivocationProof<
-        ::subxt::utils::H256,
+        subxt::utils::H256,
         u32,
     > = runtime_types::sp_consensus_grandpa::EquivocationProof {
         set_id: 64,
@@ -2190,7 +2184,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             ),
             first: (
                 runtime_types::finality_grandpa::Prevote {
-                    target_hash: ::subxt::utils::H256([8; 32usize]),
+                    target_hash: subxt::utils::H256([8; 32usize]),
                     target_number: 32,
                 },
                 runtime_types::sp_consensus_grandpa::app::Signature(
@@ -2199,7 +2193,7 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             ),
             second: (
                 runtime_types::finality_grandpa::Prevote {
-                    target_hash: ::subxt::utils::H256([8; 32usize]),
+                    target_hash: subxt::utils::H256([8; 32usize]),
                     target_number: 32,
                 },
                 runtime_types::sp_consensus_grandpa::app::Signature(
@@ -2301,10 +2295,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         ),
         slot: runtime_types::sp_consensus_slots::Slot(64),
         first_header: runtime_types::sp_runtime::generic::header::Header {
-            parent_hash: ::subxt::utils::H256([8; 32usize]),
+            parent_hash: subxt::utils::H256([8; 32usize]),
             number: 32,
-            state_root: ::subxt::utils::H256([8; 32usize]),
-            extrinsics_root: ::subxt::utils::H256([8; 32usize]),
+            state_root: subxt::utils::H256([8; 32usize]),
+            extrinsics_root: subxt::utils::H256([8; 32usize]),
             digest: runtime_types::sp_runtime::generic::digest::Digest {
                 logs: vec![
                     runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
@@ -2318,10 +2312,10 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
             __subxt_unused_type_params: ::core::marker::PhantomData,
         },
         second_header: runtime_types::sp_runtime::generic::header::Header {
-            parent_hash: ::subxt::utils::H256([8; 32usize]),
+            parent_hash: subxt::utils::H256([8; 32usize]),
             number: 32,
-            state_root: ::subxt::utils::H256([8; 32usize]),
-            extrinsics_root: ::subxt::utils::H256([8; 32usize]),
+            state_root: subxt::utils::H256([8; 32usize]),
+            extrinsics_root: subxt::utils::H256([8; 32usize]),
             digest: runtime_types::sp_runtime::generic::digest::Digest {
                 logs: vec![
                     runtime_types::sp_runtime::generic::digest::DigestItem::PreRuntime([8;
@@ -2377,12 +2371,12 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .call(runtime_api_call)
         .await?;
-    let account: ::subxt::utils::AccountId32 = ::subxt::utils::AccountId32([8; 32usize]);
+    let account: subxt::utils::AccountId32 = dev::bob().public_key().into();
     let runtime_api_call = runtime::apis().account_nonce_api().account_nonce(account);
     let api = OnlineClient::<PolkadotConfig>::new().await?;
     let result: u32 = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
-    let uxt: ::subxt::utils::UncheckedExtrinsic<
-        ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
+    let uxt: subxt::utils::UncheckedExtrinsic<
+        subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>,
         runtime_types::polkadot_runtime::RuntimeCall,
         runtime_types::sp_runtime::MultiSignature,
         (
@@ -2406,8 +2400,8 @@ async fn wrapper() -> Result<(), Box<dyn std::error::Error>> {
         u128,
         runtime_types::sp_weights::weight_v2::Weight,
     > = api.runtime_api().at_latest().await?.call(runtime_api_call).await?;
-    let uxt: ::subxt::utils::UncheckedExtrinsic<
-        ::subxt::utils::MultiAddress<::subxt::utils::AccountId32, ()>,
+    let uxt: subxt::utils::UncheckedExtrinsic<
+        subxt::utils::MultiAddress<subxt::utils::AccountId32, ()>,
         runtime_types::polkadot_runtime::RuntimeCall,
         runtime_types::sp_runtime::MultiSignature,
         (
