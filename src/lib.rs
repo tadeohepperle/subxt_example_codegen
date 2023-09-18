@@ -29,12 +29,13 @@
 use std::{borrow::Cow, fmt::Display};
 
 use anyhow::{anyhow, Ok};
-use context::{ExampleContext, FileOrUrl};
+use context::ExampleContext;
 use heck::ToSnakeCase;
+use parity_scale_codec::Decode;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, ToTokens};
 use scale_info::{form::PortableForm, TypeDef, Variant};
-use subxt_codegen::{DerivesRegistry, TypeGenerator, TypeSubstitutes};
+use subxt_codegen::{DerivesRegistry, RuntimeGenerator, TypeGenerator, TypeSubstitutes};
 use subxt_metadata::{
     PalletMetadata, RuntimeApiMetadata, RuntimeApiMethodMetadata, StorageEntryMetadata,
     StorageEntryType,
@@ -48,6 +49,8 @@ pub mod values;
 pub mod wasm_interface;
 #[cfg(feature = "web")]
 pub use wasm_interface::*;
+
+use crate::context::FileOrUrl;
 
 /// The [ExampleGenerator] is a struct that can be used to generate code examples for various uses of subxt.
 /// It is intended to be embedded into the WASM of a website, to create code snippets to be displayed.
@@ -64,17 +67,18 @@ pub struct ExampleGenerator<'a> {
 }
 
 impl<'a> ExampleGenerator<'a> {
-    /// Constructs an [ExampleGenerator] from a file path that leads to some scale encoded metadata.
-    pub fn fetch_from_context(context: ExampleContext) -> anyhow::Result<Self> {
-        let metadata = context.file_or_url.fetch_metadata()?;
-        Ok(Self {
-            metadata: metadata.into(),
-            context: Cow::Owned(context),
-        })
+    // Creates a new ExampleGenerator
+    pub fn new(mut metadata: subxt::Metadata, context: Cow<'a, ExampleContext>) -> Self {
+        Self { metadata, context }
     }
 
-    pub fn new(metadata: subxt::Metadata, context: Cow<'a, ExampleContext>) -> Self {
-        Self { metadata, context }
+    pub fn new_from_metadata_file(metadata_file_path: &str) -> Result<Self, anyhow::Error> {
+        let metadata_bytes = std::fs::read(metadata_file_path)?;
+        let mut metadata = subxt_metadata::Metadata::decode(&mut &metadata_bytes[..])?;
+        RuntimeGenerator::ensure_unique_type_paths(&mut metadata);
+
+        let context = ExampleContext::from_file(metadata_file_path, false);
+        Ok(Self::new(metadata.into(), Cow::Owned(context)))
     }
 
     //////////////////////////////////////////////

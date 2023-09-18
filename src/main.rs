@@ -1,6 +1,9 @@
 use std::fs;
 
+use parity_scale_codec::Decode;
+use subxt_codegen::RuntimeGenerator;
 use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
+use subxt_metadata::Metadata;
 
 /// Make sure you have a `polkadot.scale` file at the root of this project.
 ///
@@ -11,9 +14,7 @@ use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
 ///
 /// The directory `./alternative_metadata` contains different metadata files that can quickly replace the `./polkadot.scale` to see if codegen still works.
 fn main() -> anyhow::Result<()> {
-    let metadata_file = "polkadot.scale";
-    let example_context = ExampleContext::from_file(metadata_file, false);
-    let example_gen = ExampleGenerator::fetch_from_context(example_context)?;
+    let example_gen = ExampleGenerator::new_from_metadata_file("polkadot.scale")?;
     let tokens = example_gen.all_examples_wrapped()?;
 
     // you can also try something like this instead:

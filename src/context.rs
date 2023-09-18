@@ -33,17 +33,3 @@ pub enum FileOrUrl {
     File(String),
     Url(String),
 }
-
-impl FileOrUrl {
-    pub fn fetch_metadata(&self) -> anyhow::Result<Metadata> {
-        match &self {
-            FileOrUrl::File(path) => {
-                let bytes = std::fs::read(path)?;
-                let mut metadata = Metadata::decode(&mut &bytes[..])?;
-                RuntimeGenerator::ensure_unique_type_paths(&mut metadata);
-                Ok(metadata)
-            }
-            FileOrUrl::Url(_) => todo!("not yet implemented"),
-        }
-    }
-}

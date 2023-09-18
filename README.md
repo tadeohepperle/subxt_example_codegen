@@ -34,7 +34,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - [x] static storage queries
 - [x] static constant queries
 - [ ] static custom value queries
-- [ ] generate code for dynamic calls / queries
-- [ ] allow a custom file/url intead of `polkadot.scale`
-- [ ] special treatment of certain types when generating examples e.g AccountId32 can use `subxt_signer::sr25519::dev::alice().public_key()`
-- [ ] shorten `std`/`core`/`alloc` type paths in examples. Noone wants to see `::core::primitive::u128`, `u128` should suffice.
+- [x] generate code for dynamic calls / queries
+- [x] allow a custom file/url intead of `polkadot.scale`
+- [x] special treatment of certain types when generating examples e.g AccountId32 can use `subxt_signer::sr25519::dev::alice().public_key()`
+- [x] shorten `std`/`core`/`alloc` type paths in examples. Noone wants to see `::core::primitive::u128`, `u128` should suffice.
+
+## How to build:
+
+### Web
+
+```
+wasm-pack build --no-default-features --features web
+```
+
+### Native
+
+```
+cargo build
+```
