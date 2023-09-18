@@ -21,7 +21,6 @@ web = [
 ]
 
 [dependencies]
-# crate-type = ["cdylib"]
 
 # these local dependencies can be used if you prefer developing locally:
 subxt = { path = "../subxt/subxt", default-features = false, features = [

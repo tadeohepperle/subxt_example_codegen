@@ -658,17 +658,73 @@ impl<T: ToTokens> PruneTypePath for T {
     }
 }
 
-// a test
-#[cfg(test)]
+pub fn format_code(code: &str) -> String {
+    let syn_tree = syn::parse_file(&code).unwrap();
+    let pretty = prettyplease::unparse(&syn_tree);
+    pretty
+}
 
-mod test {
-    use quote::quote;
+pub fn format_type(type_code: &str) -> String {
+    let code = format!("type A = {type_code};");
+    let pretty = format_code(&code);
+    pretty[9..(pretty.len() - 2)].to_string()
+}
 
-    use crate::PruneTypePath;
-
-    #[test]
-    pub fn test() {
-        let t = quote!("::core::option::Option");
-        dbg!(t.prune());
+pub fn format_scale_value_string(input: &str) -> String {
+    fn add_indentation(output: &mut String, indent_level: i32) {
+        for _ in 0..indent_level {
+            output.push_str("    ");
+        }
     }
+
+    let mut output = String::new();
+    let mut indent_level = 0;
+    // in a tuple we will not set line breaks on comma, so we keep track of it here:
+    let mut in_tuple = 0;
+    let mut tokens_since_last_bracket_or_comma: usize = 0;
+    for ch in input.chars() {
+        let mut token_is_bracket_or_comma = true;
+        match ch {
+            '{' => {
+                indent_level += 1;
+                output.push(ch);
+                output.push('\n');
+                add_indentation(&mut output, indent_level);
+            }
+            '}' => {
+                indent_level -= 1;
+                output.push('\n');
+                add_indentation(&mut output, indent_level);
+                output.push(ch);
+            }
+            ',' => {
+                output.push(ch);
+                // makes small tuples e.g. (u8, u16, u8, u8) not cause line breaks.
+                if in_tuple > 0 && tokens_since_last_bracket_or_comma < 5 {
+                    output.push(' ');
+                } else {
+                    output.push('\n');
+                    add_indentation(&mut output, indent_level);
+                }
+            }
+            '(' => {
+                output.push(ch);
+                in_tuple += 1;
+            }
+            ')' => {
+                output.push(ch);
+                in_tuple -= 1;
+            }
+            _ => {
+                token_is_bracket_or_comma = false;
+                output.push(ch);
+            }
+        }
+        if token_is_bracket_or_comma {
+            tokens_since_last_bracket_or_comma = 0;
+        } else {
+            tokens_since_last_bracket_or_comma += 1;
+        }
+    }
+    output
 }

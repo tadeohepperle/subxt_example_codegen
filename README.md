@@ -50,5 +50,5 @@ wasm-pack build --no-default-features --features web
 ### Native
 
 ```
-cargo build
+cargo run --no-default-features --features native --target=x86_64-unknown-linux-gnu
 ```

@@ -2,7 +2,9 @@ use std::fs;
 
 use parity_scale_codec::Decode;
 use subxt_codegen::RuntimeGenerator;
-use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
+use subxt_example_codegen::{
+    context::ExampleContext, format_code, format_scale_value_string, ExampleGenerator,
+};
 use subxt_metadata::Metadata;
 
 /// Make sure you have a `polkadot.scale` file at the root of this project.
@@ -14,6 +16,22 @@ use subxt_metadata::Metadata;
 ///
 /// The directory `./alternative_metadata` contains different metadata files that can quickly replace the `./polkadot.scale` to see if codegen still works.
 fn main() -> anyhow::Result<()> {
+    let c = format_code("type A = runtime_types::frame_system::AccountInfo<u32,runtime_types::pallet_balances::types::AccountData<u128>>;");
+
+    let val = scale_value::value!({ base_block: { ref_time: 10351, proof_size: 0 }, max_block: { ref_time: 200, proof_size: 184 }, per_class: { normal: { 
+        base_extrinsic: { ref_time: 107648000, proof_size: 0 }, max_extrinsic: Some ({ ref_time: 147, proof_size: 1365059}), max_total: Some ({ ref_time: 1500, proof_size: 138350580 }), reserved: Some ({ ref_time: 0, proof_size: 0 }) }, operational: { base_extrinsic: { ref_time: 107648000, proof_size: 0 }, max_extrinsic: Some ({ ref_time: 32323223, proof_size: 233223 }), max_total: Some ({ ref_time: 233223, proof_size: 184
+         }), reserved: Some ({ ref_time: 50, proof_size: 46116 }) }, mandatory: { base_extrinsic: { ref_time: 107648000, proof_size: 0 }, max_extrinsic: None (), max_total: None (), reserved: None () } } });
+
+    let s = val.to_string();
+
+    let c = format_scale_value_string(&s);
+
+    println!("{c}");
+    return Ok(());
+
+    println!("{c}");
+    dbg!(c);
+
     let example_gen = ExampleGenerator::new_from_metadata_file("polkadot.scale")?;
     let tokens = example_gen.all_examples_wrapped()?;
 

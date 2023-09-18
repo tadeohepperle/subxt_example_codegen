@@ -2,6 +2,7 @@
 
 use std::{borrow::Cow, convert::Infallible, fmt::Debug, ops::FromResidual};
 
+use anyhow::anyhow;
 use parity_scale_codec::Decode;
 use quote::ToTokens;
 use serde::Serialize;
@@ -9,7 +10,10 @@ use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
 use subxt_metadata::{Metadata, PalletMetadata, RuntimeApiMetadata};
 use wasm_bindgen::{convert::IntoWasmAbi, prelude::*};
 
-use crate::{context::ExampleContext, storage_entry_key_ty_ids, ExampleGenerator, PruneTypePath};
+use crate::{
+    context::ExampleContext, format_code, format_scale_value_string, format_type,
+    storage_entry_key_ty_ids, ExampleGenerator, PruneTypePath,
+};
 
 macro_rules! console_log {
     // Note that this is using the `log` function imported above during
@@ -24,13 +28,6 @@ extern "C" {
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 
-}
-
-#[wasm_bindgen]
-pub fn format_code(code: &str) -> String {
-    let syn_tree = syn::parse_file(&code).unwrap();
-    let pretty = prettyplease::unparse(&syn_tree);
-    pretty
 }
 
 #[wasm_bindgen]
@@ -120,7 +117,8 @@ impl Client {
         let type_gen = self.example_gen_static.type_gen();
         type_gen.types().resolve(type_id)?;
         let type_path_string = type_gen.resolve_type_path(type_id).prune().to_string();
-        Some(format_code(&type_path_string))
+        let type_path_string = format_type(&type_path_string);
+        Some(type_path_string)
     }
 }
 
@@ -202,6 +200,21 @@ impl Client {
         let pallet_metadata = metadata.pallet_by_name(pallet_name)?;
         let call = pallet_metadata.call_variant_by_name(call_name)?;
 
+        let argument_types = call
+            .fields
+            .iter()
+            .map(|field| {
+                let name = field
+                    .name
+                    .as_ref()
+                    .ok_or_else(|| anyhow!("field of call variant does not have name"))?;
+                let type_path = self
+                    .resolve_type_path(field.ty.id)
+                    .ok_or_else(|| anyhow!("could not resolve the type of a call variant field"))?;
+                Ok(NameAndType { name, type_path })
+            })
+            .collect::<Result<Vec<_>, anyhow::Error>>()?;
+
         // static code example
         let code_example_static = self
             .example_gen_static
@@ -217,6 +230,7 @@ impl Client {
             docs: &call.docs,
             code_example_static: &format_code(&code_example_static.to_string()),
             code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
+            argument_types: &argument_types,
         };
         serde_wasm_bindgen::to_value(&content)
             .expect("should always work")
@@ -279,6 +293,7 @@ impl Client {
             .constant_example_wrapped(pallet_name, constant_name)?;
 
         let value = self.constant_at(pallet_name, constant_name)?;
+        let value_str = format_scale_value_string(&value.to_string());
         let value_type = self.resolve_type_path(constant.ty())?;
 
         let content = ConstantContent {
@@ -286,7 +301,7 @@ impl Client {
             name: constant_name,
             docs: constant.docs(),
             value_type: &value_type,
-            value: &value.to_string(),
+            value: &value_str,
             code_example_static: &format_code(&code_example_static.to_string()),
             code_example_dynamic: &format_code(&code_example_dynamic.to_string()),
         };
@@ -383,8 +398,8 @@ impl Client {
         let storage_address = subxt::storage::dynamic::<()>(pallet_name, entry_name, vec![]);
         let value: scale_value::Value<u32> =
             storage_client.fetch(&storage_address).await??.to_value()?;
-
-        JsValue::from_str(&value.to_string()).into()
+        let value_str = format_scale_value_string(&value.to_string());
+        JsValue::from_str(&value_str).into()
     }
 }
 
@@ -440,10 +455,11 @@ pub struct MetadataContent<'a> {
 
 impl<'a> MetadataContent<'a> {
     pub fn from_metadata(metadata: &'a subxt_metadata::Metadata) -> MetadataContent<'a> {
-        let pallets = metadata
+        let mut pallets: Vec<PalletContent> = metadata
             .pallets()
             .map(|p| PalletContent::from_pallet_metadata(p))
             .collect();
+        pallets.sort_by(|a, b| a.index.cmp(&b.index));
 
         let runtime_apis: Vec<RuntimeApiTraitContent> = metadata
             .runtime_api_traits()
@@ -465,6 +481,7 @@ impl<'a> MetadataContent<'a> {
 
 #[derive(Serialize, Debug)]
 pub struct PalletContent<'a> {
+    pub index: u8,
     pub name: &'a str,
     pub calls: Vec<&'a str>,
     pub storage_entries: Vec<&'a str>,
@@ -487,6 +504,7 @@ impl<'a> PalletContent<'a> {
         let constants = pallet_metadata.constants().map(|c| c.name()).collect();
 
         PalletContent {
+            index: pallet_metadata.index(),
             name,
             calls,
             storage_entries: storage_items,
@@ -519,6 +537,7 @@ pub struct CallContent<'a> {
     pub docs: &'a [String],
     pub code_example_static: &'a str,
     pub code_example_dynamic: &'a str,
+    pub argument_types: &'a [NameAndType<'a>],
 }
 
 /// Represents all the information about a storage entry that we want to show to a user.
