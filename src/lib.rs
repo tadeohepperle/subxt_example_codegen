@@ -31,7 +31,7 @@ use std::{borrow::Cow, fmt::Display};
 use anyhow::{anyhow, Ok};
 use context::{ExampleContext, FileOrUrl};
 use heck::ToSnakeCase;
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::{Ident, Punct, TokenStream, TokenTree};
 use quote::{format_ident, quote, ToTokens};
 use scale_info::{form::PortableForm, TypeDef, Variant};
 use subxt_codegen::{DerivesRegistry, TypeGenerator, TypeSubstitutes};
@@ -39,13 +39,14 @@ use subxt_metadata::{
     PalletMetadata, RuntimeApiMetadata, RuntimeApiMethodMetadata, StorageEntryMetadata,
     StorageEntryType,
 };
-use values::{dynamic_type_example, static_type_example};
 
 pub mod context;
 /// empty mod, copy paste stuff in here to validate code quickly
 mod generated;
 pub mod values;
+#[cfg(feature = "web")]
 pub mod wasm_interface;
+#[cfg(feature = "web")]
 pub use wasm_interface::*;
 
 /// The [ExampleGenerator] is a struct that can be used to generate code examples for various uses of subxt.
@@ -236,7 +237,7 @@ impl<'a> ExampleGenerator<'a> {
             quote!(DecodedValueThunk)
         } else {
             let value_type = entry.entry_type().value_ty();
-            let value_type_path = type_gen.resolve_type_path(value_type);
+            let value_type_path = type_gen.resolve_type_path(value_type).prune();
             quote!(#value_type_path)
         };
 
@@ -280,7 +281,7 @@ impl<'a> ExampleGenerator<'a> {
         } else {
             let pallet_name = format_ident!("{}", pallet.name().to_snake_case());
             let constant_name = format_ident!("{}", constant.name().to_snake_case());
-            let constant_type_path = type_gen.resolve_type_path(constant.ty());
+            let constant_type_path = type_gen.resolve_type_path(constant.ty()).prune();
             quote!(
                 let constant_query = runtime::constants().#pallet_name().#constant_name();
                 let api = OnlineClient::<PolkadotConfig>::new().await?;
@@ -298,7 +299,7 @@ impl<'a> ExampleGenerator<'a> {
             .get(name)
             .ok_or_else(|| anyhow!("custom value {name} not found."))?;
 
-        let custom_value_type = type_gen.resolve_type_path(custom_value.type_id());
+        let custom_value_type = type_gen.resolve_type_path(custom_value.type_id()).prune();
         let interface_name = &self.context.inter_face_ident;
 
         let address_expr = if self.context.dynamic {
@@ -337,14 +338,14 @@ impl<'a> ExampleGenerator<'a> {
         let output_type_path = if self.context.dynamic {
             quote!(DecodedValueThunk)
         } else {
-            let value_type_path = type_gen.resolve_type_path(method.output_ty());
+            let value_type_path = type_gen.resolve_type_path(method.output_ty()).prune();
             quote!(#value_type_path)
         };
 
         let code = quote!(
             #runtime_api_call_code
             let api = OnlineClient::<PolkadotConfig>::new().await?;
-            let result : Option<#output_type_path> = api
+            let result : #output_type_path = api
                 .runtime_api()
                 .at_latest()
                 .await?
@@ -375,8 +376,9 @@ impl<'a> ExampleGenerator<'a> {
                 .name
                 .as_ref()
                 .expect("only named fields should be call arguments");
-            let type_path =
-                type_gen.resolve_field_type_path(field.ty.id, &[], field.type_name.as_deref());
+            let type_path = type_gen
+                .resolve_field_type_path(field.ty.id, &[], field.type_name.as_deref())
+                .prune();
             (name, field.ty.id, type_path)
         });
 
@@ -418,7 +420,7 @@ impl<'a> ExampleGenerator<'a> {
             .enumerate()
             .map(|(i, type_id)| {
                 let variable_name = format!("key_{i}");
-                let type_path = type_gen.resolve_type_path(type_id);
+                let type_path = type_gen.resolve_type_path(type_id).prune();
                 (variable_name, type_id, type_path)
             });
         let (variable_names, variable_declarations) =
@@ -457,7 +459,7 @@ impl<'a> ExampleGenerator<'a> {
         method: &RuntimeApiMethodMetadata,
     ) -> anyhow::Result<TokenStream> {
         let variable_iter = method.inputs().map(|param| {
-            let type_path = type_gen.resolve_type_path(param.ty);
+            let type_path = type_gen.resolve_type_path(param.ty).prune();
             (param.name.as_str(), param.ty, type_path)
         });
         let (variable_names, variable_declarations) =
@@ -596,7 +598,7 @@ pub fn storage_entry_key_ty_ids(
 /// The iterator item is: (variable_name, type_id, type_path)
 fn variable_names_and_declarations(
     type_gen: &TypeGenerator,
-    variables: impl Iterator<Item = (impl Display, u32, impl ToTokens)>,
+    variables: impl Iterator<Item = (impl Display, u32, TokenStream)>,
     context: &ExampleContext,
 ) -> anyhow::Result<(Vec<Ident>, Vec<TokenStream>)> {
     let mut variable_names: Vec<Ident> = vec![];
@@ -605,15 +607,15 @@ fn variable_names_and_declarations(
     for (variable_name, type_id, type_path) in variables {
         let variable_name = format_ident!("{variable_name}");
         let type_example = if context.dynamic {
-            dynamic_type_example(type_id, type_gen.types())?
+            values::dynamic_values::type_example(type_id, type_gen.types())?
         } else {
-            static_type_example(type_id, type_gen)?
+            values::static_values::type_example(type_id, type_gen)?
         };
 
         let type_path = if context.dynamic {
             quote!(Value)
         } else {
-            type_path.to_token_stream()
+            type_path
         };
 
         // put it together as a variable declaration
@@ -623,4 +625,40 @@ fn variable_names_and_declarations(
     }
 
     Ok((variable_names, variable_declarations))
+}
+
+trait PruneTypePath {
+    fn prune(&self) -> TokenStream;
+}
+
+impl<T: ToTokens> PruneTypePath for T {
+    fn prune(&self) -> TokenStream {
+        const PATH_SEGMENTS_REPLACEMENTS: &[(&'static str, &'static str)] = &[
+            ("::std::vec::Vec", "Vec"),
+            ("::core::option::Option", "Option"),
+            ("::core::primitive::", ""),
+        ];
+
+        let mut s = self.to_token_stream().to_string();
+        s = s.replace(' ', "");
+        for (from, to) in PATH_SEGMENTS_REPLACEMENTS {
+            s = s.replace(from, to);
+        }
+        s.parse().expect("should work")
+    }
+}
+
+// a test
+#[cfg(test)]
+
+mod test {
+    use quote::quote;
+
+    use crate::PruneTypePath;
+
+    #[test]
+    pub fn test() {
+        let t = quote!("::core::option::Option");
+        dbg!(t.prune());
+    }
 }

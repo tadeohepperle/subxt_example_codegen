@@ -5,6 +5,8 @@ use quote::{format_ident, quote, ToTokens};
 use scale_info::{form::PortableForm, Field, Type, TypeDef, TypeDefPrimitive};
 use subxt_codegen::{CratePath, TypeDefGen, TypeGenerator};
 
+use crate::{values::dynamic_values::type_id_example, PruneTypePath};
+
 pub enum CompactMode {
     // explicitely stating Compact(u32)
     Expl,
@@ -31,6 +33,38 @@ fn type_def_example(
     ty: &Type<PortableForm>,
     compact_mode: CompactMode,
 ) -> anyhow::Result<TokenStream> {
+    fn last_path_segment(ty: &Type<PortableForm>, s: &str) -> bool {
+        ty.path.segments.last().map_or(false, |e| e == s)
+    }
+
+    // cannot use normal construction for `subxt::utils::UncheckedExtrinsic`, because phantom data is private.
+    if last_path_segment(ty, "UncheckedExtrinsic") {
+        return Ok(quote!(subxt::utils::UncheckedExtrinsic::new(vec![
+            1, 2, 3, 4
+        ])));
+    }
+
+    // BtreeMaps are replaced by KeyedVec = Vec<K,V>, causes problems because the type alias is seen as a 1 element typle struct -> wrong example generation
+    if last_path_segment(ty, "BTreeMap") {
+        let key_ty = ty
+            .type_params
+            .get(0)
+            .ok_or_else(|| anyhow!("type name is BTreeMap, we expect 2 type paramters."))?
+            .ty
+            .ok_or_else(|| anyhow!("key has no known type"))?;
+        let value_ty = ty
+            .type_params
+            .get(1)
+            .ok_or_else(|| anyhow!("type name is BTreeMap, we expect 2 type paramters."))?
+            .ty
+            .ok_or_else(|| anyhow!("key has no known type"))?;
+
+        let key_example = type_example(key_ty.id, type_gen)?;
+        let value_example = type_example(value_ty.id, type_gen)?;
+        return Ok(quote!(vec![(#key_example, #value_example)]));
+    }
+
+    // general handling of type definitions
     match &ty.type_def {
         scale_info::TypeDef::Composite(def) => {
             let struct_path = resolve_type_path_omit_generics(type_gen, id);
@@ -55,7 +89,11 @@ fn type_def_example(
             // Technically we also need for phantom types here, but that is quite difficult at the moment, because we only want to check for a single variant, and TypeDefGen does not support that right now
             // So for now, we set it to false.
             let fields = fields_example(type_gen, &first_variant.fields, false)?;
-            Ok(quote!(#enum_path:: #variant_ident #fields))
+            let mut example = quote!(#enum_path::#variant_ident #fields);
+            if example.to_string() == "Option :: None" {
+                example = quote!(None);
+            };
+            Ok(example)
         }
         scale_info::TypeDef::Sequence(def) => {
             // return a Vec with 2 elements:
@@ -217,7 +255,8 @@ fn type_def_is_copy(type_gen: &TypeGenerator, ty: &TypeDef<PortableForm>) -> boo
 ///
 /// This is a workaround, should probably be handled with syn::Expr somehow
 fn resolve_type_path_omit_generics(type_gen: &TypeGenerator, id: u32) -> TokenStream {
-    let path = type_gen.resolve_type_path(id);
+    let path = type_gen.resolve_type_path(id).prune();
+
     let path: TokenStream = path
         .to_token_stream()
         .into_iter()
@@ -226,5 +265,6 @@ fn resolve_type_path_omit_generics(type_gen: &TypeGenerator, id: u32) -> TokenSt
             _ => true,
         })
         .collect();
+
     path
 }

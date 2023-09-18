@@ -12,7 +12,7 @@ use subxt_example_codegen::{context::ExampleContext, ExampleGenerator};
 /// The directory `./alternative_metadata` contains different metadata files that can quickly replace the `./polkadot.scale` to see if codegen still works.
 fn main() -> anyhow::Result<()> {
     let metadata_file = "polkadot.scale";
-    let example_context = ExampleContext::from_file(metadata_file, true);
+    let example_context = ExampleContext::from_file(metadata_file, false);
     let example_gen = ExampleGenerator::fetch_from_context(example_context)?;
     let tokens = example_gen.all_examples_wrapped()?;
 
