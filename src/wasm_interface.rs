@@ -4,7 +4,7 @@ use std::{borrow::Cow, convert::Infallible, fmt::Debug, ops::FromResidual};
 
 use anyhow::anyhow;
 use parity_scale_codec::Decode;
-use quote::ToTokens;
+
 use serde::Serialize;
 use subxt::{OfflineClient, OnlineClient, SubstrateConfig};
 use subxt_metadata::{Metadata, PalletMetadata, RuntimeApiMetadata};
@@ -457,13 +457,13 @@ impl<'a> MetadataContent<'a> {
     pub fn from_metadata(metadata: &'a subxt_metadata::Metadata) -> MetadataContent<'a> {
         let mut pallets: Vec<PalletContent> = metadata
             .pallets()
-            .map(|p| PalletContent::from_pallet_metadata(p))
+            .map(PalletContent::from_pallet_metadata)
             .collect();
         pallets.sort_by(|a, b| a.index.cmp(&b.index));
 
         let runtime_apis: Vec<RuntimeApiTraitContent> = metadata
             .runtime_api_traits()
-            .map(|e| RuntimeApiTraitContent::from_metadata(e))
+            .map(RuntimeApiTraitContent::from_metadata)
             .collect();
         let custom_values: Vec<String> = metadata
             .custom()

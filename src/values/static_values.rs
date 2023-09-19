@@ -5,7 +5,7 @@ use quote::{format_ident, quote, ToTokens};
 use scale_info::{form::PortableForm, Field, Type, TypeDef, TypeDefPrimitive};
 use subxt_codegen::{CratePath, TypeDefGen, TypeGenerator};
 
-use crate::{values::dynamic_values::type_id_example, PruneTypePath};
+use crate::{PruneTypePath};
 
 pub enum CompactMode {
     // explicitely stating Compact(u32)

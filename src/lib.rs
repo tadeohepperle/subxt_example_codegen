@@ -68,7 +68,7 @@ pub struct ExampleGenerator<'a> {
 
 impl<'a> ExampleGenerator<'a> {
     // Creates a new ExampleGenerator
-    pub fn new(mut metadata: subxt::Metadata, context: Cow<'a, ExampleContext>) -> Self {
+    pub fn new(metadata: subxt::Metadata, context: Cow<'a, ExampleContext>) -> Self {
         Self { metadata, context }
     }
 
@@ -467,7 +467,7 @@ impl<'a> ExampleGenerator<'a> {
             (param.name.as_str(), param.ty, type_path)
         });
         let (variable_names, variable_declarations) =
-            variable_names_and_declarations(&type_gen, variable_iter, &self.context)?;
+            variable_names_and_declarations(type_gen, variable_iter, &self.context)?;
 
         let call_expr = if self.context.dynamic {
             let runtime_api_trait_name = runtime_api_trait.name();
@@ -637,12 +637,12 @@ pub trait PruneTypePath {
 
 impl<T: ToTokens> PruneTypePath for T {
     fn prune(&self) -> TokenStream {
-        let e: subxt::utils::AccountId32 = subxt_signer::ecdsa::dev::bob().public_key().into();
+        let _e: subxt::utils::AccountId32 = subxt_signer::ecdsa::dev::bob().public_key().into();
 
         //
         // WARNING: HACKY CUSTOM LOGIC
         //
-        const PATH_SEGMENTS_REPLACEMENTS: &[(&'static str, &'static str)] = &[
+        const PATH_SEGMENTS_REPLACEMENTS: &[(&str, &str)] = &[
             ("::std::vec::Vec", "Vec"),
             ("::core::option::Option", "Option"),
             ("::core::primitive::", ""),
@@ -659,9 +659,9 @@ impl<T: ToTokens> PruneTypePath for T {
 }
 
 pub fn format_code(code: &str) -> String {
-    let syn_tree = syn::parse_file(&code).unwrap();
-    let pretty = prettyplease::unparse(&syn_tree);
-    pretty
+    let syn_tree = syn::parse_file(code).unwrap();
+    
+    prettyplease::unparse(&syn_tree)
 }
 
 pub fn format_type(type_code: &str) -> String {
